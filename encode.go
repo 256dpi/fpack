@@ -18,6 +18,11 @@ func NewEncoder() *Encoder {
 	return encoderPool.Get().(*Encoder)
 }
 
+// Counting returns whether the encoder is currently counting.
+func (e *Encoder) Counting() bool {
+	return e.buf == nil
+}
+
 // Length will return the accumulated length.
 func (e *Encoder) Length() int {
 	return e.len

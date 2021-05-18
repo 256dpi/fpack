@@ -1,6 +1,7 @@
 package fpack
 
 import (
+	"io"
 	"math"
 	"testing"
 
@@ -8,7 +9,12 @@ import (
 )
 
 func TestEncode(t *testing.T) {
-	res, _, err := Encode(true, func(enc *Encoder) error {
+	testEncode(t, true)
+	testEncode(t, false)
+}
+
+func testEncode(t *testing.T, borrow bool) {
+	res, _, err := Encode(borrow, func(enc *Encoder) error {
 		enc.Bool(true)
 		enc.Bool(false)
 		enc.Int8(math.MaxInt8)
@@ -33,6 +39,42 @@ func TestEncode(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, dummy, res)
+}
+
+func TestEncodeErrors(t *testing.T) {
+	data, ref, err := Encode(true, func(enc *Encoder) error {
+		return io.EOF
+	})
+	ref.Release()
+	assert.Equal(t, io.EOF, err)
+	assert.Empty(t, data)
+
+	data, ref, err = Encode(false, func(enc *Encoder) error {
+		return io.EOF
+	})
+	ref.Release()
+	assert.Equal(t, io.EOF, err)
+	assert.Empty(t, data)
+
+	data, ref, err = Encode(true, func(enc *Encoder) error {
+		if !enc.Counting() {
+			return io.EOF
+		}
+		return nil
+	})
+	ref.Release()
+	assert.Equal(t, io.EOF, err)
+	assert.Empty(t, data)
+
+	data, ref, err = Encode(false, func(enc *Encoder) error {
+		if !enc.Counting() {
+			return io.EOF
+		}
+		return nil
+	})
+	ref.Release()
+	assert.Equal(t, io.EOF, err)
+	assert.Empty(t, data)
 }
 
 func TestEncodeAllocation(t *testing.T) {

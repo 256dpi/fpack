@@ -1,6 +1,7 @@
 package fpack
 
 import (
+	"io"
 	"math"
 	"testing"
 
@@ -8,6 +9,11 @@ import (
 )
 
 func TestDecode(t *testing.T) {
+	testDecode(t, false)
+	testDecode(t, true)
+}
+
+func testDecode(t *testing.T, clone bool) {
 	var bt bool
 	var bf bool
 	var i8 int8
@@ -44,11 +50,11 @@ func TestDecode(t *testing.T) {
 		f64 = dec.Float64()
 		vi = dec.VarInt()
 		vu = dec.VarUint()
-		fs = dec.String(1, false)
-		fb = dec.Bytes(1, false)
-		vs = dec.VarString(false)
-		vb = dec.VarBytes(false)
-		tail = dec.Tail(false)
+		fs = dec.String(1, clone)
+		fb = dec.Bytes(1, clone)
+		vs = dec.VarString(clone)
+		vb = dec.VarBytes(clone)
+		tail = dec.Tail(clone)
 		return nil
 	})
 	assert.NoError(t, err)
@@ -72,6 +78,107 @@ func TestDecode(t *testing.T) {
 	assert.Equal(t, "foo", vs)
 	assert.Equal(t, []byte("bar"), vb)
 	assert.Equal(t, []byte("baz"), tail)
+}
+
+func TestDecodeErrors(t *testing.T) {
+	table := []func(*Decoder){
+		func(dec *Decoder) {
+			dec.Int(8)
+		},
+		func(dec *Decoder) {
+			dec.Uint(8)
+		},
+		func(dec *Decoder) {
+			dec.VarInt()
+		},
+		func(dec *Decoder) {
+			dec.VarUint()
+		},
+		func(dec *Decoder) {
+			dec.String(8, true)
+		},
+		func(dec *Decoder) {
+			dec.Bytes(8, true)
+		},
+		func(dec *Decoder) {
+			dec.VarString(true)
+		},
+		func(dec *Decoder) {
+			dec.VarBytes(true)
+		},
+		func(dec *Decoder) {
+			dec.Tail(true)
+		},
+	}
+
+	for _, item := range table {
+		err := Decode(nil, func(dec *Decoder) error {
+			dec.err = io.EOF
+			item(dec)
+			return nil
+		})
+		assert.Equal(t, io.EOF, err)
+	}
+}
+
+func TestDecodeShortBuffer(t *testing.T) {
+	table := []func(*Decoder){
+		func(dec *Decoder) {
+			dec.Int(8)
+		},
+		func(dec *Decoder) {
+			dec.Uint(8)
+		},
+		func(dec *Decoder) {
+			dec.VarInt()
+		},
+		func(dec *Decoder) {
+			dec.VarUint()
+		},
+		func(dec *Decoder) {
+			dec.String(8, true)
+		},
+		func(dec *Decoder) {
+			dec.Bytes(8, true)
+		},
+		func(dec *Decoder) {
+			dec.VarString(true)
+		},
+		func(dec *Decoder) {
+			dec.VarBytes(true)
+		},
+	}
+
+	for i, item := range table {
+		err := Decode(nil, func(dec *Decoder) error {
+			item(dec)
+			return nil
+		})
+		assert.Equal(t, ErrBufferTooShort, err, i)
+	}
+
+	table = []func(*Decoder){
+		func(dec *Decoder) {
+			dec.String(1, true)
+		},
+		func(dec *Decoder) {
+			dec.Bytes(1, true)
+		},
+		func(dec *Decoder) {
+			dec.VarString(true)
+		},
+		func(dec *Decoder) {
+			dec.VarBytes(true)
+		},
+	}
+
+	for i, item := range table {
+		err := Decode([]byte{42}, func(dec *Decoder) error {
+			item(dec)
+			return nil
+		})
+		assert.Equal(t, ErrBufferTooShort, err, i)
+	}
 }
 
 func TestDecodeAllocation(t *testing.T) {
