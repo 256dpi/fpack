@@ -10,10 +10,12 @@ import (
 func TestEncode(t *testing.T) {
 	res, _, err := Encode(true, func(enc *Encoder) error {
 		enc.Bool(true)
+		enc.Bool(false)
 		enc.Int8(math.MaxInt8)
 		enc.Int16(math.MaxInt16)
 		enc.Int32(math.MaxInt32)
 		enc.Int64(math.MaxInt64)
+		enc.Int64(math.MinInt64)
 		enc.Uint8(math.MaxUint8)
 		enc.Uint16(math.MaxUint16)
 		enc.Uint32(math.MaxUint32)
@@ -37,10 +39,12 @@ func TestEncodeAllocation(t *testing.T) {
 	assert.Equal(t, 0.0, testing.AllocsPerRun(10, func() {
 		_, ref, _ := Encode(true, func(enc *Encoder) error {
 			enc.Bool(true)
+			enc.Bool(false)
 			enc.Int8(math.MaxInt8)
 			enc.Int16(math.MaxInt16)
 			enc.Int32(math.MaxInt32)
 			enc.Int64(math.MaxInt64)
+			enc.Int64(math.MinInt64)
 			enc.Uint8(math.MaxUint8)
 			enc.Uint16(math.MaxUint16)
 			enc.Uint32(math.MaxUint32)
@@ -67,10 +71,12 @@ func BenchmarkEncode(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, ref, err := Encode(true, func(enc *Encoder) error {
 			enc.Bool(true)
+			enc.Bool(false)
 			enc.Int8(math.MaxInt8)
 			enc.Int16(math.MaxInt16)
 			enc.Int32(math.MaxInt32)
 			enc.Int64(math.MaxInt64)
+			enc.Int64(math.MinInt64)
 			enc.Uint8(math.MaxUint8)
 			enc.Uint16(math.MaxUint16)
 			enc.Uint32(math.MaxUint32)

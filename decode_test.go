@@ -8,11 +8,13 @@ import (
 )
 
 func TestDecode(t *testing.T) {
-	var bol bool
+	var bt bool
+	var bf bool
 	var i8 int8
 	var i16 int16
 	var i32 int32
 	var i64 int64
+	var n64 int64
 	var u8 uint8
 	var u16 uint16
 	var u32 uint32
@@ -27,11 +29,13 @@ func TestDecode(t *testing.T) {
 	var vb []byte
 	var tail []byte
 	err := Decode(dummy, func(dec *Decoder) error {
-		bol = dec.Bool()
+		bt = dec.Bool()
+		bf = dec.Bool()
 		i8 = dec.Int8()
 		i16 = dec.Int16()
 		i32 = dec.Int32()
 		i64 = dec.Int64()
+		n64 = dec.Int64()
 		u8 = dec.Uint8()
 		u16 = dec.Uint16()
 		u32 = dec.Uint32()
@@ -48,11 +52,13 @@ func TestDecode(t *testing.T) {
 		return nil
 	})
 	assert.NoError(t, err)
-	assert.True(t, bol)
+	assert.True(t, bt)
+	assert.False(t, bf)
 	assert.Equal(t, int8(math.MaxInt8), i8)
 	assert.Equal(t, int16(math.MaxInt16), i16)
 	assert.Equal(t, int32(math.MaxInt32), i32)
 	assert.Equal(t, int64(math.MaxInt64), i64)
+	assert.Equal(t, int64(math.MinInt64), n64)
 	assert.Equal(t, uint8(math.MaxUint8), u8)
 	assert.Equal(t, uint16(math.MaxUint16), u16)
 	assert.Equal(t, uint32(math.MaxUint32), u32)
@@ -72,9 +78,11 @@ func TestDecodeAllocation(t *testing.T) {
 	assert.Equal(t, 0.0, testing.AllocsPerRun(10, func() {
 		_ = Decode(dummy, func(dec *Decoder) error {
 			dec.Bool()
+			dec.Bool()
 			dec.Int8()
 			dec.Int16()
 			dec.Int32()
+			dec.Int64()
 			dec.Int64()
 			dec.Uint8()
 			dec.Uint16()
@@ -101,9 +109,11 @@ func BenchmarkDecode(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		err := Decode(dummy, func(dec *Decoder) error {
 			dec.Bool()
+			dec.Bool()
 			dec.Int8()
 			dec.Int16()
 			dec.Int32()
+			dec.Int64()
 			dec.Int64()
 			dec.Uint8()
 			dec.Uint16()

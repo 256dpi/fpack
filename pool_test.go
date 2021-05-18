@@ -9,6 +9,10 @@ import (
 
 var classes = []int{2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048}
 
+func TestNoop(t *testing.T) {
+	assert.Equal(t, noop, Noop())
+}
+
 func TestBorrow(t *testing.T) {
 	buf, ref := Borrow(123)
 	assert.Equal(t, 123, len(buf))
