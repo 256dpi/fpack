@@ -20,8 +20,8 @@ func Example() {
 	var num uint8
 	var str string
 	err = Decode(buf, func(dec *Decoder) error {
-		dec.Uint8(&num)
-		dec.String(&str, 2, false)
+		num = dec.Uint8()
+		str = dec.String(2, false)
 		return nil
 	})
 	if err != nil {

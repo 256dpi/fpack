@@ -28,260 +28,250 @@ func NewDecoder(bytes []byte) *Decoder {
 }
 
 // Bool reads a boolean.
-func (d *Decoder) Bool(bol *bool) {
-	var num uint8
-	d.Uint8(&num)
-	*bol = num == 1
+func (d *Decoder) Bool() bool {
+	return d.Uint8() == 1
 }
 
 // Int8 reads a one byte integer.
-func (d *Decoder) Int8(num *int8) {
-	var n int64
-	d.Int(&n, 1)
-	*num = int8(n)
+func (d *Decoder) Int8() int8 {
+	return int8(d.Int(1))
 }
 
 // Int16 reads a two byte integer.
-func (d *Decoder) Int16(num *int16) {
-	var n int64
-	d.Int(&n, 2)
-	*num = int16(n)
+func (d *Decoder) Int16() int16 {
+	return int16(d.Int(2))
 }
 
 // Int32 reads a four byte integer.
-func (d *Decoder) Int32(num *int32) {
-	var n int64
-	d.Int(&n, 4)
-	*num = int32(n)
+func (d *Decoder) Int32() int32 {
+	return int32(d.Int(4))
 }
 
 // Int64 reads a eight byte integer.
-func (d *Decoder) Int64(num *int64) {
-	d.Int(num, 8)
+func (d *Decoder) Int64() int64 {
+	return d.Int(8)
 }
 
 // Int read a one, two, four or eight byte integer.
-func (d *Decoder) Int(num *int64, size int) {
+func (d *Decoder) Int(size int) int64 {
 	// skip if errored
 	if d.err != nil {
-		return
+		return 0
 	}
 
 	// check length
 	if len(d.buf) < size {
 		d.err = ErrBufferTooShort
-		return
+		return 0
 	}
 
 	// read
-	var un uint64
+	var u uint64
 	switch size {
 	case 1:
-		un = uint64(d.buf[0])
+		u = uint64(d.buf[0])
 	case 2:
-		un = uint64(binary.BigEndian.Uint16(d.buf))
+		u = uint64(binary.BigEndian.Uint16(d.buf))
 	case 4:
-		un = uint64(binary.BigEndian.Uint32(d.buf))
+		u = uint64(binary.BigEndian.Uint32(d.buf))
 	case 8:
-		un = binary.BigEndian.Uint64(d.buf)
+		u = binary.BigEndian.Uint64(d.buf)
 	}
 
 	// slice
 	d.buf = d.buf[size:]
 
 	// convert
-	n := int64(un >> 1)
-	if un&1 != 0 {
-		n = ^n
+	i := int64(u >> 1)
+	if u&1 != 0 {
+		i = ^i
 	}
 
-	// set
-	*num = n
+	return i
 }
 
 // Uint8 reads a one byte unsigned integer.
-func (d *Decoder) Uint8(num *uint8) {
-	var n uint64
-	d.Uint(&n, 1)
-	*num = uint8(n)
+func (d *Decoder) Uint8() uint8 {
+	return uint8(d.Uint(1))
 }
 
 // Uint16 reads a two byte unsigned integer.
-func (d *Decoder) Uint16(num *uint16) {
-	var n uint64
-	d.Uint(&n, 2)
-	*num = uint16(n)
+func (d *Decoder) Uint16() uint16 {
+	return uint16(d.Uint(2))
 }
 
 // Uint32 reads a four byte unsigned integer.
-func (d *Decoder) Uint32(num *uint32) {
-	var n uint64
-	d.Uint(&n, 4)
-	*num = uint32(n)
+func (d *Decoder) Uint32() uint32 {
+	return uint32(d.Uint(4))
 }
 
 // Uint64 reads a eight byte unsigned integer.
-func (d *Decoder) Uint64(num *uint64) {
-	d.Uint(num, 8)
+func (d *Decoder) Uint64() uint64 {
+	return d.Uint(8)
 }
 
 // Uint reads a one, two, four or eight byte unsigned integer.
-func (d *Decoder) Uint(num *uint64, size int) {
+func (d *Decoder) Uint(size int) uint64 {
 	// skip if errored
 	if d.err != nil {
-		return
+		return 0
 	}
 
 	// check length
 	if len(d.buf) < size {
 		d.err = ErrBufferTooShort
-		return
+		return 0
 	}
 
 	// read
+	var u uint64
 	switch size {
 	case 1:
-		*num = uint64(d.buf[0])
+		u = uint64(d.buf[0])
 	case 2:
-		*num = uint64(binary.BigEndian.Uint16(d.buf))
+		u = uint64(binary.BigEndian.Uint16(d.buf))
 	case 4:
-		*num = uint64(binary.BigEndian.Uint32(d.buf))
+		u = uint64(binary.BigEndian.Uint32(d.buf))
 	case 8:
-		*num = binary.BigEndian.Uint64(d.buf)
+		u = binary.BigEndian.Uint64(d.buf)
 	}
 
 	// slice
 	d.buf = d.buf[size:]
+
+	return u
 }
 
 // Float32 reads a four byte float.
-func (d *Decoder) Float32(num *float32) {
-	var u32 uint32
-	d.Uint32(&u32)
-	*num = math.Float32frombits(u32)
+func (d *Decoder) Float32() float32 {
+	return math.Float32frombits(d.Uint32())
 }
 
 // Float64 reads an eight byte float.
-func (d *Decoder) Float64(num *float64) {
-	var u64 uint64
-	d.Uint64(&u64)
-	*num = math.Float64frombits(u64)
+func (d *Decoder) Float64() float64 {
+	return math.Float64frombits(d.Uint64())
 }
 
 // VarUint reads a variable unsigned integer.
-func (d *Decoder) VarUint(num *uint64) {
+func (d *Decoder) VarUint() uint64 {
 	// skip if errored
 	if d.err != nil {
-		return
+		return 0
 	}
 
 	// read
-	var n int
-	*num, n = binary.Uvarint(d.buf)
+	num, n := binary.Uvarint(d.buf)
 	if n == 0 {
 		d.err = ErrBufferTooShort
-		return
+		return 0
 	}
 
 	// slice
 	d.buf = d.buf[n:]
+
+	return num
 }
 
 // VarInt reads a variable signed integer.
-func (d *Decoder) VarInt(num *int64) {
+func (d *Decoder) VarInt() int64 {
 	// skip if errored
 	if d.err != nil {
-		return
+		return 0
 	}
 
 	// read
-	var n int
-	*num, n = binary.Varint(d.buf)
+	num, n := binary.Varint(d.buf)
 	if n == 0 {
 		d.err = ErrBufferTooShort
-		return
+		return 0
 	}
 
 	// slice
 	d.buf = d.buf[n:]
+
+	return num
 }
 
 // String reads a fixed length prefixed string. If the string is not cloned it
 // may change if the decoded byte slice changes.
-func (d *Decoder) String(str *string, lenSize int, clone bool) {
+func (d *Decoder) String(lenSize int, clone bool) string {
 	// skip if errored
 	if d.err != nil {
-		return
+		return ""
 	}
 
 	// read length
-	var length uint64
-	d.Uint(&length, lenSize)
+	length := d.Uint(lenSize)
 	if d.err != nil {
-		return
+		return ""
 	}
 
 	// check length
 	if len(d.buf) < int(length) {
 		d.err = ErrBufferTooShort
-		return
+		return ""
 	}
 
 	// cast or set string
+	var str string
 	if clone {
-		*str = string(d.buf[:length])
+		str = string(d.buf[:length])
 		d.buf = d.buf[length:]
 	} else {
-		*str = cast.ToString(d.buf[:length])
+		str = cast.ToString(d.buf[:length])
 		d.buf = d.buf[length:]
 	}
+
+	return str
 }
 
 // Bytes reads a fixed length prefixed byte slice. If the byte slice is not
 // cloned it may change if the decoded byte slice changes.
-func (d *Decoder) Bytes(bytes *[]byte, lenSize int, clone bool) {
+func (d *Decoder) Bytes(lenSize int, clone bool) []byte {
 	// skip if errored
 	if d.err != nil {
-		return
+		return nil
 	}
 
 	// read length
-	var length uint64
-	d.Uint(&length, lenSize)
+	length := d.Uint(lenSize)
 	if d.err != nil {
-		return
+		return nil
 	}
 
 	// check length
 	if len(d.buf) < int(length) {
 		d.err = ErrBufferTooShort
-		return
+		return nil
 	}
 
 	// clone or set bytes
+	var bytes []byte
 	if clone {
-		*bytes = make([]byte, length)
-		copy(*bytes, d.buf[:length])
+		bytes = make([]byte, length)
+		copy(bytes, d.buf[:length])
 		d.buf = d.buf[length:]
 	} else {
-		*bytes = d.buf[:length]
+		bytes = d.buf[:length]
 		d.buf = d.buf[length:]
 	}
+
+	return bytes
 }
 
 // VarString reads a variable length prefixed string. If the string is not
 // cloned it may change if the decoded byte slice changes.
-func (d *Decoder) VarString(str *string, clone bool) {
+func (d *Decoder) VarString(clone bool) string {
 	// skip if errored
 	if d.err != nil {
-		return
+		return ""
 	}
 
 	// read length
 	length, n := binary.Uvarint(d.buf)
 	if n == 0 {
 		d.err = ErrBufferTooShort
-		return
+		return ""
 	}
 
 	// slice
@@ -290,32 +280,35 @@ func (d *Decoder) VarString(str *string, clone bool) {
 	// check length
 	if len(d.buf) < int(length) {
 		d.err = ErrBufferTooShort
-		return
+		return ""
 	}
 
 	// cast or set string
+	var str string
 	if clone {
-		*str = string(d.buf[:length])
+		str = string(d.buf[:length])
 		d.buf = d.buf[length:]
 	} else {
-		*str = cast.ToString(d.buf[:length])
+		str = cast.ToString(d.buf[:length])
 		d.buf = d.buf[length:]
 	}
+
+	return str
 }
 
 // VarBytes reads a variable length prefixed byte slice. If the byte slice is
 // not cloned it may change if the decoded byte slice changes.
-func (d *Decoder) VarBytes(bytes *[]byte, clone bool) {
+func (d *Decoder) VarBytes(clone bool) []byte {
 	// skip if errored
 	if d.err != nil {
-		return
+		return nil
 	}
 
 	// read length
 	length, n := binary.Uvarint(d.buf)
 	if n == 0 {
 		d.err = ErrBufferTooShort
-		return
+		return nil
 	}
 
 	// slice
@@ -324,36 +317,42 @@ func (d *Decoder) VarBytes(bytes *[]byte, clone bool) {
 	// check length
 	if len(d.buf) < int(length) {
 		d.err = ErrBufferTooShort
-		return
+		return nil
 	}
 
 	// clone or set bytes
+	var bytes []byte
 	if clone {
-		*bytes = make([]byte, length)
-		copy(*bytes, d.buf[:length])
+		bytes = make([]byte, length)
+		copy(bytes, d.buf[:length])
 		d.buf = d.buf[length:]
 	} else {
-		*bytes = d.buf[:length]
+		bytes = d.buf[:length]
 		d.buf = d.buf[length:]
 	}
+
+	return bytes
 }
 
 // Tail reads a tail byte slice.
-func (d *Decoder) Tail(bytes *[]byte, clone bool) {
+func (d *Decoder) Tail(clone bool) []byte {
 	// skip if errored
 	if d.err != nil {
-		return
+		return nil
 	}
 
 	// clone or set bytes
+	var bytes []byte
 	if clone {
-		*bytes = make([]byte, len(d.buf))
-		copy(*bytes, d.buf[:len(d.buf)])
+		bytes = make([]byte, len(d.buf))
+		copy(bytes, d.buf[:len(d.buf)])
 		d.buf = d.buf[len(d.buf):]
 	} else {
-		*bytes = d.buf[:len(d.buf)]
+		bytes = d.buf[:len(d.buf)]
 		d.buf = d.buf[len(d.buf):]
 	}
+
+	return bytes
 }
 
 // Error will return the error.

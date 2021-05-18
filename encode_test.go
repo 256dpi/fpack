@@ -8,25 +8,6 @@ import (
 )
 
 func TestEncode(t *testing.T) {
-	enc := "\x01"
-	enc += "\xFE"
-	enc += "\xFF\xFE"
-	enc += "\xFF\xFF\xFF\xFE"
-	enc += "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFE"
-	enc += "\xFF"
-	enc += "\xFF\xFF"
-	enc += "\xFF\xFF\xFF\xFF"
-	enc += "\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"
-	enc += "\x7F\x7F\xFF\xFF"
-	enc += "\x7F\xEF\xFF\xFF\xFF\xFF\xFF\xFF"
-	enc += "\x0e"
-	enc += "\x80\x04"
-	enc += "\x03foo"
-	enc += "\x03bar"
-	enc += "\x03foo"
-	enc += "\x03bar"
-	enc += "baz"
-
 	res, _, err := Encode(true, func(enc *Encoder) error {
 		enc.Bool(true)
 		enc.Int8(math.MaxInt8)
@@ -49,8 +30,10 @@ func TestEncode(t *testing.T) {
 		return nil
 	})
 	assert.NoError(t, err)
-	assert.Equal(t, []byte(enc), res)
+	assert.Equal(t, dummy, res)
+}
 
+func TestEncodeAllocation(t *testing.T) {
 	assert.Equal(t, 0.0, testing.AllocsPerRun(10, func() {
 		_, ref, _ := Encode(true, func(enc *Encoder) error {
 			enc.Bool(true)
