@@ -3,7 +3,7 @@ package fpack
 import "sync"
 
 const minSize = 9
-const maxSize = 1 << 13 // 8KB
+const maxSize = 1 << 14 // 16KB
 
 var pool = sync.Pool{
 	New: func() interface{} {
