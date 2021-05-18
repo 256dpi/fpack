@@ -31,6 +31,11 @@ func (r *Ref) Release() {
 
 var noop = &Ref{done: true}
 
+// Noop will return the no-op ref.
+func Noop() *Ref {
+	return noop
+}
+
 // Borrow will return a slice that has the specified length. If the requested
 // length is too small or too long a slice will be allocated. To recycle the
 // slice, it must be released by calling Release() on the returned ref value.
