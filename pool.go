@@ -13,8 +13,8 @@ var pool = sync.Pool{
 
 // Ref is reference to a borrowed slice.
 type Ref struct {
-	array [maxSize]byte
 	done  bool
+	array [maxSize]byte
 }
 
 // Release will release the slice.
