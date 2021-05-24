@@ -209,6 +209,21 @@ func TestDecodeAllocation(t *testing.T) {
 	}))
 }
 
+func TestMustDecode(t *testing.T) {
+	var num uint64
+	ok := MustDecode([]byte("*"), func(dec *Decoder) {
+		num = dec.VarUint()
+	})
+	assert.True(t, ok)
+	assert.Equal(t, uint64(42), num)
+
+	ok = MustDecode([]byte(""), func(dec *Decoder) {
+		num = dec.VarUint()
+	})
+	assert.False(t, ok)
+	assert.Zero(t, num)
+}
+
 func BenchmarkDecode(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()

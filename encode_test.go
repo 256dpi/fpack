@@ -106,6 +106,14 @@ func TestEncodeAllocation(t *testing.T) {
 	}))
 }
 
+func TestMustEncode(t *testing.T) {
+	data, ref := MustEncode(true, func(enc *Encoder) {
+		enc.VarUint(42)
+	})
+	assert.Equal(t, "*", string(data))
+	ref.Release()
+}
+
 func BenchmarkEncode(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()

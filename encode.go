@@ -274,6 +274,7 @@ var encoderPool = sync.Pool{
 
 // Encode will encode data using the provided encoding function. The function
 // is run once to assess the length of the buffer and once to encode the data.
+// Any error returned by the callback is returned immediately.
 func Encode(borrow bool, fn func(enc *Encoder) error) ([]byte, *Ref, error) {
 	// borrow encoder
 	enc := NewEncoder()
@@ -313,4 +314,15 @@ func Encode(borrow bool, fn func(enc *Encoder) error) ([]byte, *Ref, error) {
 	}
 
 	return buf, ref, nil
+}
+
+// MustEncode wraps Encode but omits the error propagation.
+func MustEncode(borrow bool, fn func(enc *Encoder)) ([]byte, *Ref) {
+	// encode without error
+	data, ref, _ := Encode(borrow, func(enc *Encoder) error {
+		fn(enc)
+		return nil
+	})
+
+	return data, ref
 }

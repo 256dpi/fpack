@@ -377,8 +377,8 @@ var decoderPool = sync.Pool{
 }
 
 // Decode will decode data using the provided decoding function. The function is
-// run once to decode the data. It will return whether the buffer was long enough
-// to read all data.
+// run once to decode the data. It will return ErrBufferTooShort if the buffer
+// was not long enough to read all data or any error returned by the callback.
 func Decode(bytes []byte, fn func(dec *Decoder) error) error {
 	// get decoder
 	dec := NewDecoder(bytes)
@@ -391,4 +391,13 @@ func Decode(bytes []byte, fn func(dec *Decoder) error) error {
 	}
 
 	return err
+}
+
+// MustDecode wraps Decode but omits error propagation. It will return false if
+// the buffer was not long enough to read all data.
+func MustDecode(bytes []byte, fn func(dec *Decoder)) bool {
+	return Decode(bytes, func(dec *Decoder) error {
+		fn(dec)
+		return nil
+	}) != ErrBufferTooShort
 }
