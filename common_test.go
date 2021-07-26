@@ -3,7 +3,8 @@ package fpack
 var dummy []byte
 
 func init() {
-	enc := "\x01"
+	enc := "\x00\x00\x00"
+	enc += "\x01"
 	enc += "\x00"
 	enc += "\xFE"
 	enc += "\xFF\xFE"

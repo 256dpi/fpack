@@ -34,6 +34,23 @@ func (e *Encoder) Reset(buf []byte) {
 	e.buf = buf
 }
 
+// Skip the specified amount of bytes.
+func (e *Encoder) Skip(num int) {
+	// handle length
+	if e.buf == nil {
+		e.len += num
+		return
+	}
+
+	// write zeros
+	for i := 0; i < num; i++ {
+		e.buf[i] = 0
+	}
+
+	// slice
+	e.buf = e.buf[num:]
+}
+
 // Bool writes a boolean.
 func (e *Encoder) Bool(yes bool) {
 	if yes {

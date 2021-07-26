@@ -35,6 +35,7 @@ func testDecode(t *testing.T, clone bool) {
 	var vb []byte
 	var tail []byte
 	err := Decode(dummy, func(dec *Decoder) error {
+		dec.Skip(3)
 		bt = dec.Bool()
 		bf = dec.Bool()
 		i8 = dec.Int8()
@@ -184,6 +185,7 @@ func TestDecodeShortBuffer(t *testing.T) {
 func TestDecodeAllocation(t *testing.T) {
 	assert.Equal(t, 0.0, testing.AllocsPerRun(10, func() {
 		_ = Decode(dummy, func(dec *Decoder) error {
+			dec.Skip(3)
 			dec.Bool()
 			dec.Bool()
 			dec.Int8()
@@ -230,6 +232,7 @@ func BenchmarkDecode(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		err := Decode(dummy, func(dec *Decoder) error {
+			dec.Skip(3)
 			dec.Bool()
 			dec.Bool()
 			dec.Int8()

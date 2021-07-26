@@ -15,6 +15,7 @@ func TestEncode(t *testing.T) {
 
 func testEncode(t *testing.T, borrow bool) {
 	res, _, err := Encode(borrow, func(enc *Encoder) error {
+		enc.Skip(3)
 		enc.Bool(true)
 		enc.Bool(false)
 		enc.Int8(math.MaxInt8)
@@ -80,6 +81,7 @@ func TestEncodeErrors(t *testing.T) {
 func TestEncodeAllocation(t *testing.T) {
 	assert.Equal(t, 0.0, testing.AllocsPerRun(10, func() {
 		_, ref, _ := Encode(true, func(enc *Encoder) error {
+			enc.Skip(3)
 			enc.Bool(true)
 			enc.Bool(false)
 			enc.Int8(math.MaxInt8)
@@ -120,6 +122,7 @@ func BenchmarkEncode(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		_, ref, err := Encode(true, func(enc *Encoder) error {
+			enc.Skip(3)
 			enc.Bool(true)
 			enc.Bool(false)
 			enc.Int8(math.MaxInt8)

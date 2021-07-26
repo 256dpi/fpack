@@ -27,6 +27,18 @@ func NewDecoder(bytes []byte) *Decoder {
 	return dec
 }
 
+// Skip the specified amount of bytes.
+func (d *Decoder) Skip(num int) {
+	// check length
+	if len(d.buf) < num {
+		d.err = ErrBufferTooShort
+		return
+	}
+
+	// slice
+	d.buf = d.buf[num:]
+}
+
 // Bool reads a boolean.
 func (d *Decoder) Bool() bool {
 	return d.Uint8() == 1
