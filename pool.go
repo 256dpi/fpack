@@ -69,14 +69,22 @@ func Clone(a []byte) ([]byte, *Ref) {
 	return buf, ref
 }
 
-// Concat will concatenate the two byte slices using a borrowed slice.
-func Concat(a, b []byte) ([]byte, *Ref) {
+// Concat will concatenate the provided byte slices using a borrowed slice.
+func Concat(slices ...[]byte) ([]byte, *Ref) {
+	// compute total length
+	var total int
+	for _, s := range slices {
+		total += len(s)
+	}
+
 	// borrow buffer
-	buf, ref := Borrow(len(a) + len(b))
+	buf, ref := Borrow(total)
 
 	// copy bytes
-	n := copy(buf, a)
-	copy(buf[n:], b)
+	var pos int
+	for _, s := range slices {
+		pos += copy(buf[pos:], s)
+	}
 
 	return buf, ref
 }

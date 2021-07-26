@@ -31,15 +31,15 @@ func TestBorrow(t *testing.T) {
 	}))
 }
 
-func TestCopy(t *testing.T) {
+func TestClone(t *testing.T) {
 	buf, ref := Clone([]byte("foo"))
 	assert.Equal(t, []byte("foo"), buf)
 	ref.Release()
 }
 
 func TestConcat(t *testing.T) {
-	buf, ref := Concat([]byte("foo"), []byte("123"))
-	assert.Equal(t, []byte("foo123"), buf)
+	buf, ref := Concat([]byte("foo"), []byte("123"), []byte("bar"))
+	assert.Equal(t, []byte("foo123bar"), buf)
 	ref.Release()
 }
 
