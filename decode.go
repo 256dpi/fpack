@@ -59,7 +59,7 @@ func (d *Decoder) Int32() int32 {
 	return int32(d.Int(4))
 }
 
-// Int64 reads a eight byte integer.
+// Int64 reads an eight byte integer.
 func (d *Decoder) Int64() int64 {
 	return d.Int(8)
 }
@@ -117,7 +117,7 @@ func (d *Decoder) Uint32() uint32 {
 	return uint32(d.Uint(4))
 }
 
-// Uint64 reads a eight byte unsigned integer.
+// Uint64 reads an eight byte unsigned integer.
 func (d *Decoder) Uint64() uint64 {
 	return d.Uint(8)
 }

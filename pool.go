@@ -11,7 +11,7 @@ var pool = sync.Pool{
 	},
 }
 
-// Ref is reference to a borrowed slice.
+// Ref is a reference to a borrowed slice.
 type Ref struct {
 	done  bool
 	array [maxSize]byte
@@ -31,7 +31,7 @@ func (r *Ref) Release() {
 
 var noop = &Ref{done: true}
 
-// Noop will return the no-op ref.
+// Noop returns a no-op ref.
 func Noop() *Ref {
 	return noop
 }

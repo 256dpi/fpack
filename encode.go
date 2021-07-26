@@ -75,7 +75,7 @@ func (e *Encoder) Int32(num int32) {
 	e.Int(int64(num), 4)
 }
 
-// Int64 writes a eight byte integer.
+// Int64 writes an eight byte integer.
 func (e *Encoder) Int64(num int64) {
 	e.Int(num, 8)
 }
@@ -125,7 +125,7 @@ func (e *Encoder) Uint32(num uint32) {
 	e.Uint(uint64(num), 4)
 }
 
-// Uint64 writes a eight byte unsigned integer.
+// Uint64 writes an eight byte unsigned integer.
 func (e *Encoder) Uint64(num uint64) {
 	e.Uint(num, 8)
 }
@@ -159,7 +159,7 @@ func (e *Encoder) Float32(num float32) {
 	e.Uint32(math.Float32bits(num))
 }
 
-// Float64 writes a eight byte float.
+// Float64 writes an eight byte float.
 func (e *Encoder) Float64(num float64) {
 	e.Uint64(math.Float64bits(num))
 }
