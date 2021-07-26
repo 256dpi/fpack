@@ -84,6 +84,9 @@ func testDecode(t *testing.T, clone bool) {
 func TestDecodeErrors(t *testing.T) {
 	table := []func(*Decoder){
 		func(dec *Decoder) {
+			dec.Skip(3)
+		},
+		func(dec *Decoder) {
 			dec.Int(8)
 		},
 		func(dec *Decoder) {
@@ -124,6 +127,9 @@ func TestDecodeErrors(t *testing.T) {
 
 func TestDecodeShortBuffer(t *testing.T) {
 	table := []func(*Decoder){
+		func(dec *Decoder) {
+			dec.Skip(3)
+		},
 		func(dec *Decoder) {
 			dec.Int(8)
 		},

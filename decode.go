@@ -29,6 +29,11 @@ func NewDecoder(bytes []byte) *Decoder {
 
 // Skip the specified amount of bytes.
 func (d *Decoder) Skip(num int) {
+	// skip if errored
+	if d.err != nil {
+		return
+	}
+
 	// check length
 	if len(d.buf) < num {
 		d.err = ErrBufferTooShort
