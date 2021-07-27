@@ -26,24 +26,36 @@ func init() {
 
 // Ref is a reference to a borrowed slice.
 type Ref struct {
-	done  bool
+	mutex sync.Mutex
+	count int8
 	pool  int
 	slice []byte
 }
 
 // Release will release the slice.
 func (r *Ref) Release() {
-	// return if unavailable
-	if r == nil || r.done {
+	// acquire mutex
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	// check no-op count
+	if r.count == -1 {
 		return
 	}
 
+	// check valid count
+	if r.count != 1 {
+		panic("fpack: invalid count")
+	}
+
+	// set count
+	r.count = 0
+
 	// return
 	pools[r.pool].Put(r)
-	r.done = true
 }
 
-var noop = &Ref{done: true}
+var noop = &Ref{count: -1}
 
 // Noop returns a no-op ref.
 func Noop() *Ref {
@@ -52,7 +64,7 @@ func Noop() *Ref {
 
 // Borrow will return a slice that has the specified length. If the requested
 // length is too small or too long a slice will be allocated. To recycle the
-// slice, it must be released by calling Release() on the returned ref value.
+// slice, it must be released by calling Release() on the returned Ref value.
 // Always release any returned value, even if the slice grows, it is possible
 // to return the originally requested slice.
 //
@@ -76,7 +88,9 @@ func Borrow(len int) ([]byte, *Ref) {
 
 	// otherwise get from pool
 	ref := pools[pool].Get().(*Ref)
-	ref.done = false
+
+	// set count
+	ref.count = 1
 
 	return ref.slice[0:len], ref
 }

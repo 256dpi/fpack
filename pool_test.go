@@ -1,6 +1,7 @@
 package fpack
 
 import (
+	"runtime"
 	"strconv"
 	"testing"
 
@@ -28,13 +29,14 @@ func TestBorrow(t *testing.T) {
 	buf, ref := Borrow(123)
 	assert.Equal(t, 123, len(buf))
 	assert.Equal(t, 1024, cap(buf))
-	assert.False(t, ref.done)
+	assert.Equal(t, int8(1), ref.count)
 
 	ref.Release()
-	assert.True(t, ref.done)
+	assert.Equal(t, int8(0), ref.count)
 
-	ref.Release()
-	assert.True(t, ref.done)
+	assert.PanicsWithValue(t, "fpack: invalid count", func() {
+		ref.Release()
+	})
 
 	assert.Equal(t, 2.0, testing.AllocsPerRun(100, func() {
 		Borrow(123)
@@ -60,6 +62,22 @@ func TestBorrowCapacity(t *testing.T) {
 	buf, ref = Borrow(777 << 17)
 	assert.Equal(t, 777<<17, cap(buf))
 	ref.Release()
+}
+
+func TestDoubleRelease(t *testing.T) {
+	runtime.GC()
+
+	_, ref1 := Borrow(123)
+	ref1.Release()
+
+	_, ref2 := Borrow(123)
+	assert.Equal(t, ref1, ref2)
+
+	ref1.Release()
+
+	assert.PanicsWithValue(t, "fpack: invalid count", func() {
+		ref2.Release()
+	})
 }
 
 func TestClone(t *testing.T) {
