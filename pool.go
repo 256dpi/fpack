@@ -1,11 +1,11 @@
 package fpack
 
 import (
+	"math/bits"
 	"sync"
 	"sync/atomic"
 )
 
-var index []int
 var pools []*sync.Pool
 var generation uint64
 
@@ -20,7 +20,6 @@ func init() {
 	for i := 0; i < 16; i++ {
 		num := int8(i)
 		size := 1 << (i + 10)
-		index = append(index, size)
 		pools = append(pools, &sync.Pool{
 			New: func() interface{} {
 				return &buffer{
@@ -68,13 +67,12 @@ func (r Ref) Release() {
 // used by calling make(). From benchmarks this seems to be faster than calling
 // the pool to borrow and return a value.
 func Borrow(len int) ([]byte, Ref) {
-	// select pool
-	pool := -1
-	for i, max := range index {
-		if len < max {
-			pool = i
-			break
-		}
+	// get pool
+	pool := bits.Len64(uint64(len)) - 10
+	if pool < 0 {
+		pool = 0
+	} else if pool >= 16 {
+		pool = -1
 	}
 
 	// allocate if too small or too big
