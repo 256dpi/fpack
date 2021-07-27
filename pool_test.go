@@ -75,6 +75,12 @@ func TestDoubleRelease(t *testing.T) {
 	})
 }
 
+func TestRefInterface(t *testing.T) {
+	var _ interface {
+		Release()
+	} = Ref{}
+}
+
 func TestClone(t *testing.T) {
 	buf, ref := Clone([]byte("foo"))
 	assert.Equal(t, []byte("foo"), buf)
