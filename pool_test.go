@@ -16,7 +16,7 @@ func TestNoop(t *testing.T) {
 func TestBorrow(t *testing.T) {
 	buf, ref := Borrow(123)
 	assert.Equal(t, 123, len(buf))
-	assert.Equal(t, maxSize, cap(buf))
+	assert.Equal(t, 1024, cap(buf))
 	assert.False(t, ref.done)
 
 	ref.Release()
@@ -25,10 +25,30 @@ func TestBorrow(t *testing.T) {
 	ref.Release()
 	assert.True(t, ref.done)
 
-	assert.Equal(t, 0.0, testing.AllocsPerRun(10, func() {
+	assert.Equal(t, 2.0, testing.AllocsPerRun(100, func() {
+		Borrow(123)
+	}))
+
+	assert.Equal(t, 0.0, testing.AllocsPerRun(100, func() {
 		_, ref := Borrow(123)
 		ref.Release()
 	}))
+}
+
+func TestBorrowCapacity(t *testing.T) {
+	buf, ref := Borrow(7)
+	assert.Equal(t, 7, cap(buf))
+	ref.Release()
+
+	for i := 0; i < 16; i++ {
+		buf, ref = Borrow(777 << i)
+		assert.Equal(t, 1<<(10+i), cap(buf))
+		ref.Release()
+	}
+
+	buf, ref = Borrow(777 << 17)
+	assert.Equal(t, 777<<17, cap(buf))
+	ref.Release()
 }
 
 func TestClone(t *testing.T) {
