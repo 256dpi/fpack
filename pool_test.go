@@ -75,6 +75,13 @@ func TestConcat(t *testing.T) {
 }
 
 func BenchmarkPool(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, ref := Borrow(123)
+		ref.Release()
+	}
+}
+
+func BenchmarkPoolClasses(b *testing.B) {
 	for _, class := range classes {
 		b.Run(strconv.Itoa(class), func(b *testing.B) {
 			list := make([][]byte, b.N)
@@ -91,7 +98,7 @@ func BenchmarkPool(b *testing.B) {
 	}
 }
 
-func BenchmarkMake(b *testing.B) {
+func BenchmarkMakeClasses(b *testing.B) {
 	for _, class := range classes {
 		b.Run(strconv.Itoa(class), func(b *testing.B) {
 			list := make([][]byte, b.N)
