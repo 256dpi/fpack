@@ -46,15 +46,15 @@ func TestEncodeErrors(t *testing.T) {
 	data, ref, err := Encode(true, func(enc *Encoder) error {
 		return io.EOF
 	})
-	ref.Release()
 	assert.Equal(t, io.EOF, err)
 	assert.Empty(t, data)
+	assert.Nil(t, ref)
 
 	data, ref, err = Encode(false, func(enc *Encoder) error {
 		return io.EOF
 	})
-	ref.Release()
 	assert.Equal(t, io.EOF, err)
+	assert.Nil(t, ref)
 	assert.Empty(t, data)
 
 	data, ref, err = Encode(true, func(enc *Encoder) error {
@@ -63,8 +63,8 @@ func TestEncodeErrors(t *testing.T) {
 		}
 		return nil
 	})
-	ref.Release()
 	assert.Equal(t, io.EOF, err)
+	assert.Nil(t, ref)
 	assert.Empty(t, data)
 
 	data, ref, err = Encode(false, func(enc *Encoder) error {
@@ -73,8 +73,8 @@ func TestEncodeErrors(t *testing.T) {
 		}
 		return nil
 	})
-	ref.Release()
 	assert.Equal(t, io.EOF, err)
+	assert.Nil(t, ref)
 	assert.Empty(t, data)
 }
 

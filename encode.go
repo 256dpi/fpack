@@ -291,7 +291,8 @@ var encoderPool = sync.Pool{
 
 // Encode will encode data using the provided encoding function. The function
 // is run once to assess the length of the buffer and once to encode the data.
-// Any error returned by the callback is returned immediately.
+// Any error returned by the callback is returned immediately. If a slice is
+// not borrowed, a no-op ref is returned for convenience.
 func Encode(borrow bool, fn func(enc *Encoder) error) ([]byte, *Ref, error) {
 	// borrow encoder
 	enc := NewEncoder()
