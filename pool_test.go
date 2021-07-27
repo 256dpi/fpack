@@ -44,6 +44,10 @@ func TestBorrowCapacity(t *testing.T) {
 	assert.Equal(t, 7, cap(buf))
 	ref.Release()
 
+	buf, ref = Borrow(77)
+	assert.Equal(t, 1<<10, cap(buf))
+	ref.Release()
+
 	for i := 0; i < 16; i++ {
 		buf, ref = Borrow(777 << i)
 		assert.Equal(t, 1<<(10+i), cap(buf))
