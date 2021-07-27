@@ -18,7 +18,7 @@ func NewEncoder() *Encoder {
 	return &Encoder{}
 }
 
-// Counting returns whether the encoder is currently counting.
+// Counting returns whether the encoder is counting.
 func (e *Encoder) Counting() bool {
 	return e.buf == nil
 }
@@ -28,7 +28,7 @@ func (e *Encoder) Length() int {
 	return e.len
 }
 
-// Reset will reset the encoder and set the provided byte slice.
+// Reset will reset the encoder.
 func (e *Encoder) Reset(buf []byte) {
 	e.len = 0
 	e.buf = buf
@@ -207,7 +207,7 @@ func (e *Encoder) String(str string, lenSize int) {
 	e.buf = e.buf[len(str):]
 }
 
-// Bytes writes a variable length prefixed byte slice.
+// Bytes writes a fixed length prefixed byte slice.
 func (e *Encoder) Bytes(buf []byte, lenSize int) {
 	// handle length
 	if e.buf == nil {
@@ -281,8 +281,7 @@ var encoderPool = sync.Pool{
 
 // Encode will encode data using the provided encoding function. The function
 // is run once to assess the length of the buffer and once to encode the data.
-// Any error returned by the callback is returned immediately. If a slice is
-// not borrowed, a no-op ref is returned for convenience.
+// Any error returned by the callback is returned immediately.
 func Encode(borrow bool, fn func(enc *Encoder) error) ([]byte, Ref, error) {
 	buf, _, ref, err := encode(nil, &borrow, fn)
 	return buf, ref, err
@@ -290,8 +289,9 @@ func Encode(borrow bool, fn func(enc *Encoder) error) ([]byte, Ref, error) {
 
 // EncodeInto will encode data into the specified byte slice using the provided
 // encoding function. The function is run once to assess the length of the
-// buffer and once to encode the data. If the provided buffer is too small
-// ErrBufferTooShort is returned.
+// buffer and once to encode the data. Any error returned by the callback is
+// returned immediately. If the provided buffer is too small ErrBufferTooShort
+// is returned.
 func EncodeInto(buf []byte, fn func(enc *Encoder) error) (int, error) {
 	_, n, _, err := encode(buf, nil, fn)
 	return n, err

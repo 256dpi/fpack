@@ -14,20 +14,20 @@ type Decoder struct {
 	err error
 }
 
-// NewDecoder will return a decoder for the provided buffer.
+// NewDecoder will return a new decoder.
 func NewDecoder(buf []byte) *Decoder {
 	return &Decoder{
 		buf: buf,
 	}
 }
 
-// Reset will reset the decoder and set the provided byte slice.
+// Reset will reset the decoder.
 func (d *Decoder) Reset(buf []byte) {
 	d.buf = buf
 	d.err = nil
 }
 
-// Error will return the error.
+// Error will return the current error.
 func (d *Decoder) Error() error {
 	return d.err
 }
@@ -356,7 +356,8 @@ func (d *Decoder) VarBytes(clone bool) []byte {
 	return bytes
 }
 
-// Tail reads a tail byte slice.
+// Tail reads a tail byte slice. If the byte slice is not cloned it may change
+// if the decoded byte slice changes.
 func (d *Decoder) Tail(clone bool) []byte {
 	// skip if errored
 	if d.err != nil {

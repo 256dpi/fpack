@@ -41,7 +41,7 @@ type Ref struct {
 }
 
 // Release will release the borrowed slice. The function should be called at
-// most once as it protects from double releasing and other invalid access.
+// most once and will panic otherwise.
 func (r Ref) Release() {
 	// treat zero refs as no-ops
 	if r == zeroRef {
