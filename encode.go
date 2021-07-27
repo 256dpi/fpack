@@ -15,7 +15,7 @@ type Encoder struct {
 
 // NewEncoder will return an encoder.
 func NewEncoder() *Encoder {
-	return encoderPool.Get().(*Encoder)
+	return &Encoder{}
 }
 
 // Counting returns whether the encoder is currently counting.
@@ -273,19 +273,9 @@ func (e *Encoder) Tail(buf []byte) {
 	e.buf = e.buf[len(buf):]
 }
 
-// Release will release the encoder.
-func (e *Encoder) Release() {
-	// reset encoder
-	e.len = 0
-	e.buf = nil
-
-	// return encoder
-	encoderPool.Put(e)
-}
-
 var encoderPool = sync.Pool{
 	New: func() interface{} {
-		return &Encoder{}
+		return NewEncoder()
 	},
 }
 
@@ -294,9 +284,14 @@ var encoderPool = sync.Pool{
 // Any error returned by the callback is returned immediately. If a slice is
 // not borrowed, a no-op ref is returned for convenience.
 func Encode(borrow bool, fn func(enc *Encoder) error) ([]byte, Ref, error) {
-	// borrow encoder
-	enc := NewEncoder()
-	defer enc.Release()
+	// borrow
+	enc := encoderPool.Get().(*Encoder)
+
+	// recycle
+	defer func() {
+		enc.Reset(nil)
+		encoderPool.Put(enc)
+	}()
 
 	// count
 	err := fn(enc)

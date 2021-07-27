@@ -18,13 +18,22 @@ type Decoder struct {
 	err error
 }
 
-// NewDecoder will return a decoder for the provided byte slice.
-func NewDecoder(bytes []byte) *Decoder {
-	// borrow decoder
-	dec := decoderPool.Get().(*Decoder)
-	dec.buf = bytes
+// NewDecoder will return a decoder for the provided buffer.
+func NewDecoder(buf []byte) *Decoder {
+	return &Decoder{
+		buf: buf,
+	}
+}
 
-	return dec
+// Reset will reset the decoder and set the provided byte slice.
+func (d *Decoder) Reset(buf []byte) {
+	d.buf = buf
+	d.err = nil
+}
+
+// Error will return the error.
+func (d *Decoder) Error() error {
+	return d.err
 }
 
 // Skip the specified amount of bytes.
@@ -372,24 +381,9 @@ func (d *Decoder) Tail(clone bool) []byte {
 	return bytes
 }
 
-// Error will return the error.
-func (d *Decoder) Error() error {
-	return d.err
-}
-
-// Release will release the decoder.
-func (d *Decoder) Release() {
-	// reset decoder
-	d.buf = nil
-	d.err = nil
-
-	// return decoder
-	decoderPool.Put(d)
-}
-
 var decoderPool = sync.Pool{
 	New: func() interface{} {
-		return &Decoder{}
+		return NewDecoder(nil)
 	},
 }
 
@@ -397,9 +391,15 @@ var decoderPool = sync.Pool{
 // run once to decode the data. It will return ErrBufferTooShort if the buffer
 // was not long enough to read all data or any error returned by the callback.
 func Decode(bytes []byte, fn func(dec *Decoder) error) error {
-	// get decoder
-	dec := NewDecoder(bytes)
-	defer dec.Release()
+	// borrow
+	dec := decoderPool.Get().(*Decoder)
+	dec.Reset(bytes)
+
+	// recycle
+	defer func() {
+		dec.Reset(nil)
+		decoderPool.Put(dec)
+	}()
 
 	// decode
 	err := fn(dec)
