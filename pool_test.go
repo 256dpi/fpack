@@ -18,6 +18,10 @@ func TestIndex(t *testing.T) {
 
 func TestNoop(t *testing.T) {
 	assert.NotNil(t, Noop())
+	assert.NotPanics(t, func() {
+		Noop().Release()
+		Noop().Release()
+	})
 }
 
 func TestBorrow(t *testing.T) {
