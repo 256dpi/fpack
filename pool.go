@@ -10,7 +10,6 @@ var pools []*sync.Pool
 var generation uint64
 
 type buffer struct {
-	mutex sync.Mutex
 	gen   uint64
 	pool  int8
 	slice []byte
@@ -50,19 +49,12 @@ func (r Ref) Release() {
 		return
 	}
 
-	// acquire mutex
-	r.buf.mutex.Lock()
-	defer r.buf.mutex.Unlock()
-
-	// check generation
-	if r.gen != r.buf.gen {
+	// reset and check generation
+	if !atomic.CompareAndSwapUint64(&r.buf.gen, r.gen, 0) {
 		panic("fpack: generation mismatch")
 	}
 
-	// set count
-	r.buf.gen = 0
-
-	// return
+	// recycle buffer
 	pools[r.buf.pool].Put(r.buf)
 }
 
@@ -70,7 +62,7 @@ func (r Ref) Release() {
 // length is too small or too long a slice will be allocated. To recycle the
 // slice, it must be released by calling Release() on the returned Ref value.
 // Always release any returned value, even if the slice grows, it is possible
-// to return the originally requested slice.
+// to at least return the originally requested slice.
 //
 // Note: For values up to 8 bytes (64 bits) the internal Go arena allocator is
 // used by calling make(). From benchmarks this seems to be faster than calling
@@ -96,7 +88,7 @@ func Borrow(len int) ([]byte, Ref) {
 		gen = atomic.AddUint64(&generation, 1)
 	}
 
-	// otherwise get from pool
+	// get from pool
 	buf := pools[pool].Get().(*buffer)
 
 	// set generation
