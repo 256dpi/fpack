@@ -67,7 +67,7 @@ func (r Ref) Release() {
 // used by calling make(). From benchmarks this seems to be faster than calling
 // the pool to borrow and return a value.
 func Borrow(len int) ([]byte, Ref) {
-	// get pool
+	// determine pool
 	pool := bits.Len64(uint64(len)) - 10
 	if pool < 0 {
 		pool = 0
@@ -81,8 +81,8 @@ func Borrow(len int) ([]byte, Ref) {
 	}
 
 	// get next non zero generation
-	var gen uint64
-	for gen == 0 {
+	var gen = atomic.AddUint64(&generation, 1)
+	if gen == 0 {
 		gen = atomic.AddUint64(&generation, 1)
 	}
 
