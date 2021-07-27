@@ -17,7 +17,7 @@ func TestIndex(t *testing.T) {
 }
 
 func TestNoop(t *testing.T) {
-	assert.Equal(t, noop, Noop())
+	assert.NotNil(t, Noop())
 }
 
 func TestBorrow(t *testing.T) {
