@@ -2,20 +2,29 @@ package fpack
 
 import (
 	"sync"
+	"sync/atomic"
 )
 
 var index []int
 var pools []*sync.Pool
+var generation uint64
+
+type buffer struct {
+	mutex sync.Mutex
+	gen   uint64
+	pool  int8
+	slice []byte
+}
 
 func init() {
 	// create 16 pools from 1KB to 32MB
 	for i := 0; i < 16; i++ {
+		num := int8(i)
 		size := 1 << (i + 10)
-		num := len(pools)
 		index = append(index, size)
 		pools = append(pools, &sync.Pool{
 			New: func() interface{} {
-				return &Ref{
+				return &buffer{
 					pool:  num,
 					slice: make([]byte, size),
 				}
@@ -24,42 +33,37 @@ func init() {
 	}
 }
 
-// Ref is a reference to a borrowed slice.
+var zeroRef Ref
+
+// Ref is a reference to a borrowed slice. A zero reference represents a
+// no-op reference.
 type Ref struct {
-	mutex sync.Mutex
-	count int8
-	pool  int
-	slice []byte
+	gen uint64
+	buf *buffer
 }
 
-// Release will release the slice.
-func (r *Ref) Release() {
-	// acquire mutex
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
-
-	// check no-op count
-	if r.count == -1 {
+// Release will release the borrowed slice. The function should be called at
+// most once as it protects from double releasing and other invalid access.
+func (r Ref) Release() {
+	// treat zero refs as no-ops
+	if r == zeroRef {
 		return
 	}
 
-	// check valid count
-	if r.count != 1 {
-		panic("fpack: invalid count")
+	// acquire mutex
+	r.buf.mutex.Lock()
+	defer r.buf.mutex.Unlock()
+
+	// check generation
+	if r.gen != r.buf.gen {
+		panic("fpack: generation mismatch")
 	}
 
 	// set count
-	r.count = 0
+	r.buf.gen = 0
 
 	// return
-	pools[r.pool].Put(r)
-}
-
-var noop = &Ref{count: -1}
-
-// Noop returns a no-op ref.
-func Noop() *Ref {
-	return noop
+	pools[r.buf.pool].Put(r.buf)
 }
 
 // Borrow will return a slice that has the specified length. If the requested
@@ -71,7 +75,7 @@ func Noop() *Ref {
 // Note: For values up to 8 bytes (64 bits) the internal Go arena allocator is
 // used by calling make(). From benchmarks this seems to be faster than calling
 // the pool to borrow and return a value.
-func Borrow(len int) ([]byte, *Ref) {
+func Borrow(len int) ([]byte, Ref) {
 	// select pool
 	pool := -1
 	for i, max := range index {
@@ -83,20 +87,35 @@ func Borrow(len int) ([]byte, *Ref) {
 
 	// allocate if too small or too big
 	if len < 9 || pool == -1 {
-		return make([]byte, len), noop
+		return make([]byte, len), Ref{}
+	}
+
+	// get next non zero generation
+	var gen uint64
+	for gen == 0 {
+		gen = atomic.AddUint64(&generation, 1)
 	}
 
 	// otherwise get from pool
-	ref := pools[pool].Get().(*Ref)
+	buf := pools[pool].Get().(*buffer)
 
-	// set count
-	ref.count = 1
+	// set generation
+	buf.gen = gen
 
-	return ref.slice[0:len], ref
+	// prepare slice
+	slice := buf.slice[0:len]
+
+	// prepare ref
+	ref := Ref{
+		gen: gen,
+		buf: buf,
+	}
+
+	return slice, ref
 }
 
 // Clone will copy the provided slice into a borrowed slice.
-func Clone(slice []byte) ([]byte, *Ref) {
+func Clone(slice []byte) ([]byte, Ref) {
 	// borrow buffer
 	buf, ref := Borrow(len(slice))
 
@@ -107,7 +126,7 @@ func Clone(slice []byte) ([]byte, *Ref) {
 }
 
 // Concat will concatenate the provided byte slices using a borrowed slice.
-func Concat(slices ...[]byte) ([]byte, *Ref) {
+func Concat(slices ...[]byte) ([]byte, Ref) {
 	// compute total length
 	var total int
 	for _, s := range slices {

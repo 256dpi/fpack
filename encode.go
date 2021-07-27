@@ -293,7 +293,7 @@ var encoderPool = sync.Pool{
 // is run once to assess the length of the buffer and once to encode the data.
 // Any error returned by the callback is returned immediately. If a slice is
 // not borrowed, a no-op ref is returned for convenience.
-func Encode(borrow bool, fn func(enc *Encoder) error) ([]byte, *Ref, error) {
+func Encode(borrow bool, fn func(enc *Encoder) error) ([]byte, Ref, error) {
 	// borrow encoder
 	enc := NewEncoder()
 	defer enc.Release()
@@ -301,7 +301,7 @@ func Encode(borrow bool, fn func(enc *Encoder) error) ([]byte, *Ref, error) {
 	// count
 	err := fn(enc)
 	if err != nil {
-		return nil, nil, err
+		return nil, Ref{}, err
 	}
 
 	// get length
@@ -309,13 +309,12 @@ func Encode(borrow bool, fn func(enc *Encoder) error) ([]byte, *Ref, error) {
 
 	// get buffer
 	var buf []byte
-	var ref *Ref
+	var ref Ref
 	if borrow {
 		buf, ref = Borrow(length)
 		buf = buf[:enc.len]
 	} else {
 		buf = make([]byte, length)
-		ref = noop
 	}
 
 	// reset encoder
@@ -324,18 +323,15 @@ func Encode(borrow bool, fn func(enc *Encoder) error) ([]byte, *Ref, error) {
 	// encode
 	err = fn(enc)
 	if err != nil {
-		if ref != nil {
-			ref.Release()
-		}
-
-		return nil, nil, err
+		ref.Release()
+		return nil, Ref{}, err
 	}
 
 	return buf, ref, nil
 }
 
 // MustEncode wraps Encode but omits the error propagation.
-func MustEncode(borrow bool, fn func(enc *Encoder)) ([]byte, *Ref) {
+func MustEncode(borrow bool, fn func(enc *Encoder)) ([]byte, Ref) {
 	// encode without error
 	data, ref, _ := Encode(borrow, func(enc *Encoder) error {
 		fn(enc)
