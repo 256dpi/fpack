@@ -284,6 +284,20 @@ var encoderPool = sync.Pool{
 // Any error returned by the callback is returned immediately. If a slice is
 // not borrowed, a no-op ref is returned for convenience.
 func Encode(borrow bool, fn func(enc *Encoder) error) ([]byte, Ref, error) {
+	buf, _, ref, err := encode(nil, &borrow, fn)
+	return buf, ref, err
+}
+
+// EncodeInto will encode data into the specified byte slice using the provided
+// encoding function. The function is run once to assess the length of the
+// buffer and once to encode the data. If the provided buffer is too small
+// ErrBufferTooShort is returned.
+func EncodeInto(buf []byte, fn func(enc *Encoder) error) (int, error) {
+	_, n, _, err := encode(buf, nil, fn)
+	return n, err
+}
+
+func encode(buf []byte, borrow *bool, fn func(enc *Encoder) error) ([]byte, int, Ref, error) {
 	// borrow
 	enc := encoderPool.Get().(*Encoder)
 
@@ -296,20 +310,26 @@ func Encode(borrow bool, fn func(enc *Encoder) error) ([]byte, Ref, error) {
 	// count
 	err := fn(enc)
 	if err != nil {
-		return nil, Ref{}, err
+		return nil, 0, Ref{}, err
 	}
 
 	// get length
 	length := enc.Length()
 
+	// check length
+	if borrow == nil && len(buf) < length {
+		return nil, 0, Ref{}, ErrBufferTooShort
+	}
+
 	// get buffer
-	var buf []byte
 	var ref Ref
-	if borrow {
-		buf, ref = Borrow(length)
-		buf = buf[:enc.len]
-	} else {
-		buf = make([]byte, length)
+	if borrow != nil {
+		if *borrow {
+			buf, ref = Borrow(length)
+			buf = buf[:enc.len]
+		} else {
+			buf = make([]byte, length)
+		}
 	}
 
 	// reset encoder
@@ -319,10 +339,10 @@ func Encode(borrow bool, fn func(enc *Encoder) error) ([]byte, Ref, error) {
 	err = fn(enc)
 	if err != nil {
 		ref.Release()
-		return nil, Ref{}, err
+		return nil, 0, Ref{}, err
 	}
 
-	return buf, ref, nil
+	return buf, length, ref, nil
 }
 
 // MustEncode wraps Encode but omits the error propagation.
@@ -334,4 +354,16 @@ func MustEncode(borrow bool, fn func(enc *Encoder)) ([]byte, Ref) {
 	})
 
 	return data, ref
+}
+
+// MustEncodeInto wraps EncodeInto but omits the error propagation. It will
+// return false if the buffer was not long enough to write all data.
+func MustEncodeInto(buf []byte, fn func(enc *Encoder)) (int, bool) {
+	// encode without error
+	n, err := EncodeInto(buf, func(enc *Encoder) error {
+		fn(enc)
+		return nil
+	})
+
+	return n, err != ErrBufferTooShort
 }

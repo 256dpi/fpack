@@ -2,15 +2,11 @@ package fpack
 
 import (
 	"encoding/binary"
-	"errors"
 	"math"
 	"sync"
 
 	"github.com/tidwall/cast"
 )
-
-// ErrBufferTooShort is returned if the provided buffer is too short.
-var ErrBufferTooShort = errors.New("buffer too short")
 
 // Decoder manages data decoding.
 type Decoder struct {

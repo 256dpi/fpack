@@ -116,6 +116,36 @@ func TestMustEncode(t *testing.T) {
 	ref.Release()
 }
 
+func TestEncodeInto(t *testing.T) {
+	n, err := EncodeInto(nil, func(enc *Encoder) error {
+		enc.VarInt(42)
+		return nil
+	})
+	assert.Equal(t, ErrBufferTooShort, err)
+	assert.Zero(t, n)
+
+	n, err = EncodeInto(make([]byte, 10), func(enc *Encoder) error {
+		enc.VarUint(42)
+		return nil
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, 1, n)
+}
+
+func TestMustEncodeInto(t *testing.T) {
+	n, ok := MustEncodeInto(nil, func(enc *Encoder) {
+		enc.VarUint(42)
+	})
+	assert.False(t, ok)
+	assert.Zero(t, n)
+
+	n, ok = MustEncodeInto(make([]byte, 10), func(enc *Encoder) {
+		enc.VarUint(42)
+	})
+	assert.True(t, ok)
+	assert.Equal(t, 1, n)
+}
+
 func BenchmarkEncode(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
