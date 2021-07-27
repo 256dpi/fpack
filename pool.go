@@ -4,8 +4,6 @@ import (
 	"sync"
 )
 
-const minSize = 9
-
 var index []int
 var pools []*sync.Pool
 
@@ -72,7 +70,7 @@ func Borrow(len int) ([]byte, *Ref) {
 	}
 
 	// allocate if too small or too big
-	if len < minSize || pool == -1 {
+	if len < 9 || pool == -1 {
 		return make([]byte, len), noop
 	}
 
