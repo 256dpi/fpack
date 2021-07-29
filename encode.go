@@ -8,6 +8,7 @@ import (
 
 // Encoder manages data encoding.
 type Encoder struct {
+	bo  binary.ByteOrder
 	b10 [10]byte
 	len int
 	buf []byte
@@ -15,7 +16,14 @@ type Encoder struct {
 
 // NewEncoder will return an encoder.
 func NewEncoder() *Encoder {
-	return &Encoder{}
+	return &Encoder{
+		bo: binary.BigEndian,
+	}
+}
+
+// UseLittleEndian will set the used binary byte order to little endian.
+func (e *Encoder) UseLittleEndian() {
+	e.bo = binary.LittleEndian
 }
 
 // Counting returns whether the encoder is counting.
@@ -30,6 +38,7 @@ func (e *Encoder) Length() int {
 
 // Reset will reset the encoder.
 func (e *Encoder) Reset(buf []byte) {
+	e.bo = binary.BigEndian
 	e.len = 0
 	e.buf = buf
 }
@@ -99,11 +108,11 @@ func (e *Encoder) Int(n int64, size int) {
 	case 1:
 		e.buf[0] = uint8(un)
 	case 2:
-		binary.BigEndian.PutUint16(e.buf, uint16(un))
+		e.bo.PutUint16(e.buf, uint16(un))
 	case 4:
-		binary.BigEndian.PutUint32(e.buf, uint32(un))
+		e.bo.PutUint32(e.buf, uint32(un))
 	case 8:
-		binary.BigEndian.PutUint64(e.buf, un)
+		e.bo.PutUint64(e.buf, un)
 	}
 
 	// slice
@@ -143,11 +152,11 @@ func (e *Encoder) Uint(num uint64, size int) {
 	case 1:
 		e.buf[0] = uint8(num)
 	case 2:
-		binary.BigEndian.PutUint16(e.buf, uint16(num))
+		e.bo.PutUint16(e.buf, uint16(num))
 	case 4:
-		binary.BigEndian.PutUint32(e.buf, uint32(num))
+		e.bo.PutUint32(e.buf, uint32(num))
 	case 8:
-		binary.BigEndian.PutUint64(e.buf, num)
+		e.bo.PutUint64(e.buf, num)
 	}
 
 	// slice

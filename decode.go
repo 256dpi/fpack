@@ -10,6 +10,7 @@ import (
 
 // Decoder manages data decoding.
 type Decoder struct {
+	bo  binary.ByteOrder
 	buf []byte
 	err error
 }
@@ -17,12 +18,19 @@ type Decoder struct {
 // NewDecoder will return a new decoder.
 func NewDecoder(buf []byte) *Decoder {
 	return &Decoder{
+		bo:  binary.BigEndian,
 		buf: buf,
 	}
 }
 
+// UseLittleEndian will set the used binary byte order to little endian.
+func (d *Decoder) UseLittleEndian() {
+	d.bo = binary.LittleEndian
+}
+
 // Reset will reset the decoder.
 func (d *Decoder) Reset(buf []byte) {
+	d.bo = binary.BigEndian
 	d.buf = buf
 	d.err = nil
 }
@@ -93,11 +101,11 @@ func (d *Decoder) Int(size int) int64 {
 	case 1:
 		u = uint64(d.buf[0])
 	case 2:
-		u = uint64(binary.BigEndian.Uint16(d.buf))
+		u = uint64(d.bo.Uint16(d.buf))
 	case 4:
-		u = uint64(binary.BigEndian.Uint32(d.buf))
+		u = uint64(d.bo.Uint32(d.buf))
 	case 8:
-		u = binary.BigEndian.Uint64(d.buf)
+		u = d.bo.Uint64(d.buf)
 	}
 
 	// slice
@@ -151,11 +159,11 @@ func (d *Decoder) Uint(size int) uint64 {
 	case 1:
 		u = uint64(d.buf[0])
 	case 2:
-		u = uint64(binary.BigEndian.Uint16(d.buf))
+		u = uint64(d.bo.Uint16(d.buf))
 	case 4:
-		u = uint64(binary.BigEndian.Uint32(d.buf))
+		u = uint64(d.bo.Uint32(d.buf))
 	case 8:
-		u = binary.BigEndian.Uint64(d.buf)
+		u = d.bo.Uint64(d.buf)
 	}
 
 	// slice

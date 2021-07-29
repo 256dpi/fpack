@@ -217,6 +217,17 @@ func TestDecodeAllocation(t *testing.T) {
 	}))
 }
 
+func TestDecodeByteOrder(t *testing.T) {
+	MustDecode([]byte("\x00*"), func(dec *Decoder) {
+		assert.Equal(t, uint16(42), dec.Uint16())
+	})
+
+	MustDecode([]byte("*\x00"), func(dec *Decoder) {
+		dec.UseLittleEndian()
+		assert.Equal(t, uint16(42), dec.Uint16())
+	})
+}
+
 func TestMustDecode(t *testing.T) {
 	var num uint64
 	ok := MustDecode([]byte("*"), func(dec *Decoder) {

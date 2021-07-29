@@ -146,6 +146,19 @@ func TestMustEncodeInto(t *testing.T) {
 	assert.Equal(t, 1, n)
 }
 
+func TestEncodeByteOrder(t *testing.T) {
+	buf, _ := MustEncode(false, func(enc *Encoder) {
+		enc.Uint16(42)
+	})
+	assert.Equal(t, "\x00*", string(buf))
+
+	buf, _ = MustEncode(false, func(enc *Encoder) {
+		enc.UseLittleEndian()
+		enc.Uint16(42)
+	})
+	assert.Equal(t, "*\x00", string(buf))
+}
+
 func BenchmarkEncode(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
