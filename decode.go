@@ -95,34 +95,21 @@ func (d *Decoder) Int(size int) int64 {
 		return 0
 	}
 
-	// read
-	var u uint64
+	// read and convert
+	var i int64
 	switch size {
 	case 1:
-		u = uint64(d.buf[0])
+		i = int64(int8(d.buf[0]))
 	case 2:
-		u = uint64(d.bo.Uint16(d.buf))
+		i = int64(int16(d.bo.Uint16(d.buf)))
 	case 4:
-		u = uint64(d.bo.Uint32(d.buf))
+		i = int64(int32(d.bo.Uint32(d.buf)))
 	case 8:
-		u = d.bo.Uint64(d.buf)
+		i = int64(d.bo.Uint64(d.buf))
 	}
 
 	// slice
 	d.buf = d.buf[size:]
-
-	// convert
-	var i int64
-	switch size {
-	case 1:
-		i = int64(int8(uint8(u)))
-	case 2:
-		i = int64(int16(uint16(u)))
-	case 4:
-		i = int64(int32(uint32(u)))
-	case 8:
-		i = int64(u)
-	}
 
 	return i
 }
