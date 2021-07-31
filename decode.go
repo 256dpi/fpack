@@ -62,27 +62,27 @@ func (d *Decoder) Bool() bool {
 	return d.Uint8() == 1
 }
 
-// Int8 reads a one byte integer.
+// Int8 reads a one byte signed integer (two's complement).
 func (d *Decoder) Int8() int8 {
 	return int8(d.Int(1))
 }
 
-// Int16 reads a two byte integer.
+// Int16 reads a two byte signed integer (two's complement).
 func (d *Decoder) Int16() int16 {
 	return int16(d.Int(2))
 }
 
-// Int32 reads a four byte integer.
+// Int32 reads a four byte signed integer (two's complement).
 func (d *Decoder) Int32() int32 {
 	return int32(d.Int(4))
 }
 
-// Int64 reads an eight byte integer.
+// Int64 reads an eight byte signed integer (two's complement).
 func (d *Decoder) Int64() int64 {
 	return d.Int(8)
 }
 
-// Int read a one, two, four or eight byte integer.
+// Int read a one, two, four or eight byte signed integer (two's complement).
 func (d *Decoder) Int(size int) int64 {
 	// skip if errored
 	if d.err != nil {
@@ -112,9 +112,16 @@ func (d *Decoder) Int(size int) int64 {
 	d.buf = d.buf[size:]
 
 	// convert
-	i := int64(u >> 1)
-	if u&1 != 0 {
-		i = ^i
+	var i int64
+	switch size {
+	case 1:
+		i = int64(int8(uint8(u)))
+	case 2:
+		i = int64(int16(uint16(u)))
+	case 4:
+		i = int64(int32(uint32(u)))
+	case 8:
+		i = int64(u)
 	}
 
 	return i

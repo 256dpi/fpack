@@ -20,7 +20,7 @@ func testDecode(t *testing.T, clone bool) {
 	var i16 int16
 	var i32 int32
 	var i64 int64
-	var n64 int64
+	var ni int64
 	var u8 uint8
 	var u16 uint16
 	var u32 uint32
@@ -42,7 +42,7 @@ func testDecode(t *testing.T, clone bool) {
 		i16 = dec.Int16()
 		i32 = dec.Int32()
 		i64 = dec.Int64()
-		n64 = dec.Int64()
+		ni = dec.Int(4)
 		u8 = dec.Uint8()
 		u16 = dec.Uint16()
 		u32 = dec.Uint32()
@@ -65,7 +65,7 @@ func testDecode(t *testing.T, clone bool) {
 	assert.Equal(t, int16(math.MaxInt16), i16)
 	assert.Equal(t, int32(math.MaxInt32), i32)
 	assert.Equal(t, int64(math.MaxInt64), i64)
-	assert.Equal(t, int64(math.MinInt64), n64)
+	assert.Equal(t, int64(-42), ni)
 	assert.Equal(t, uint8(math.MaxUint8), u8)
 	assert.Equal(t, uint16(math.MaxUint16), u16)
 	assert.Equal(t, uint32(math.MaxUint32), u32)

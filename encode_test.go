@@ -22,7 +22,7 @@ func testEncode(t *testing.T, borrow bool) {
 		enc.Int16(math.MaxInt16)
 		enc.Int32(math.MaxInt32)
 		enc.Int64(math.MaxInt64)
-		enc.Int64(math.MinInt64)
+		enc.Int(-42, 4)
 		enc.Uint8(math.MaxUint8)
 		enc.Uint16(math.MaxUint16)
 		enc.Uint32(math.MaxUint32)
@@ -157,6 +157,30 @@ func TestEncodeByteOrder(t *testing.T) {
 		enc.Uint16(42)
 	})
 	assert.Equal(t, "*\x00", string(buf))
+}
+
+func TestEncodeByteOrderNegative(t *testing.T) {
+	buf, _ := MustEncode(false, func(enc *Encoder) {
+		enc.Int16(42)
+	})
+	assert.Equal(t, "\x00*", string(buf))
+
+	buf, _ = MustEncode(false, func(enc *Encoder) {
+		enc.UseLittleEndian()
+		enc.Int16(42)
+	})
+	assert.Equal(t, "*\x00", string(buf))
+
+	buf, _ = MustEncode(false, func(enc *Encoder) {
+		enc.Int16(-42)
+	})
+	assert.Equal(t, "\xFF\xD6", string(buf))
+
+	buf, _ = MustEncode(false, func(enc *Encoder) {
+		enc.UseLittleEndian()
+		enc.Int16(-42)
+	})
+	assert.Equal(t, "\xD6\xFF", string(buf))
 }
 
 func BenchmarkEncode(b *testing.B) {

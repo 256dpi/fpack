@@ -69,33 +69,30 @@ func (e *Encoder) Bool(yes bool) {
 	}
 }
 
-// Int8 writes a one byte integer.
+// Int8 writes a one byte signed integer (two's complement).
 func (e *Encoder) Int8(num int8) {
 	e.Int(int64(num), 1)
 }
 
-// Int16 writes a two byte integer.
+// Int16 writes a two byte signed integer (two's complement).
 func (e *Encoder) Int16(num int16) {
 	e.Int(int64(num), 2)
 }
 
-// Int32 writes a four byte integer.
+// Int32 writes a four byte signed integer (two's complement).
 func (e *Encoder) Int32(num int32) {
 	e.Int(int64(num), 4)
 }
 
-// Int64 writes an eight byte integer.
+// Int64 writes an eight byte signed integer (two's complement).
 func (e *Encoder) Int64(num int64) {
 	e.Int(num, 8)
 }
 
-// Int writes a one, two, four or eight byte integer.
+// Int writes a one, two, four or eight byte signed integer (two's complement).
 func (e *Encoder) Int(n int64, size int) {
 	// convert
-	un := uint64(n) << 1
-	if n < 0 {
-		un = ^un
-	}
+	un := uint64(n)
 
 	// handle length
 	if e.buf == nil {
