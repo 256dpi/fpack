@@ -33,14 +33,14 @@ func testDecode(t *testing.T, clone bool) {
 	var f64 float64
 	var vi int64
 	var vu uint64
+	var s string
+	var b []byte
 	var fs string
 	var fb []byte
 	var vs string
 	var vb []byte
 	var ds string
 	var db []byte
-	var rs string
-	var rb []byte
 	var tail []byte
 	err := Decode(dummy, func(dec *Decoder) error {
 		dec.Skip(3)
@@ -63,14 +63,14 @@ func testDecode(t *testing.T, clone bool) {
 		f64 = dec.Float64()
 		vi = dec.VarInt()
 		vu = dec.VarUint()
-		fs = dec.String(1, clone)
-		fb = dec.Bytes(1, clone)
+		s = dec.String(3, clone)
+		b = dec.Bytes(3, clone)
+		fs = dec.FixString(1, clone)
+		fb = dec.FixBytes(1, clone)
 		vs = dec.VarString(clone)
 		vb = dec.VarBytes(clone)
-		ds = dec.DelimString("\x00", clone)
-		db = dec.DelimBytes([]byte{0}, clone)
-		rs = dec.RawString(3, clone)
-		rb = dec.RawBytes(3, clone)
+		ds = dec.DelString("\x00", clone)
+		db = dec.DelBytes([]byte{0}, clone)
 		tail = dec.Tail(clone)
 		return nil
 	})
@@ -94,14 +94,14 @@ func testDecode(t *testing.T, clone bool) {
 	assert.Equal(t, math.MaxFloat64, f64)
 	assert.Equal(t, int64(7), vi)
 	assert.Equal(t, uint64(512), vu)
+	assert.Equal(t, "foo", s)
+	assert.Equal(t, []byte("bar"), b)
 	assert.Equal(t, "foo", fs)
 	assert.Equal(t, []byte("bar"), fb)
 	assert.Equal(t, "foo", vs)
 	assert.Equal(t, []byte("bar"), vb)
 	assert.Equal(t, "foo", ds)
 	assert.Equal(t, []byte("bar"), db)
-	assert.Equal(t, "foo", rs)
-	assert.Equal(t, []byte("bar"), rb)
 	assert.Equal(t, []byte("baz"), tail)
 }
 
@@ -137,10 +137,10 @@ func TestDecodeErrors(t *testing.T) {
 			dec.VarUint()
 		},
 		func(dec *Decoder) {
-			dec.String(8, true)
+			dec.FixString(8, true)
 		},
 		func(dec *Decoder) {
-			dec.Bytes(8, true)
+			dec.FixBytes(8, true)
 		},
 		func(dec *Decoder) {
 			dec.VarString(true)
@@ -149,10 +149,10 @@ func TestDecodeErrors(t *testing.T) {
 			dec.VarBytes(true)
 		},
 		func(dec *Decoder) {
-			dec.DelimString("\x00", true)
+			dec.DelString("\x00", true)
 		},
 		func(dec *Decoder) {
-			dec.DelimBytes([]byte("\x00"), true)
+			dec.DelBytes([]byte("\x00"), true)
 		},
 		func(dec *Decoder) {
 			dec.Tail(true)
@@ -192,10 +192,10 @@ func TestDecodeShortBuffer(t *testing.T) {
 			dec.VarUint()
 		},
 		func(dec *Decoder) {
-			dec.String(8, true)
+			dec.FixString(8, true)
 		},
 		func(dec *Decoder) {
-			dec.Bytes(8, true)
+			dec.FixBytes(8, true)
 		},
 		func(dec *Decoder) {
 			dec.VarString(true)
@@ -215,10 +215,10 @@ func TestDecodeShortBuffer(t *testing.T) {
 
 	table = []func(*Decoder){
 		func(dec *Decoder) {
-			dec.String(1, true)
+			dec.FixString(1, true)
 		},
 		func(dec *Decoder) {
-			dec.Bytes(1, true)
+			dec.FixBytes(1, true)
 		},
 		func(dec *Decoder) {
 			dec.VarString(true)
@@ -227,10 +227,10 @@ func TestDecodeShortBuffer(t *testing.T) {
 			dec.VarBytes(true)
 		},
 		func(dec *Decoder) {
-			dec.DelimString("\x00", true)
+			dec.DelString("\x00", true)
 		},
 		func(dec *Decoder) {
-			dec.DelimBytes([]byte("\x00"), true)
+			dec.DelBytes([]byte("\x00"), true)
 		},
 	}
 
@@ -274,14 +274,14 @@ func TestDecodeAllocation(t *testing.T) {
 			dec.Float64()
 			dec.VarInt()
 			dec.VarUint()
-			dec.String(1, false)
-			dec.Bytes(1, false)
+			dec.String(3, false)
+			dec.Bytes(3, false)
+			dec.FixString(1, false)
+			dec.FixBytes(1, false)
 			dec.VarString(false)
 			dec.VarBytes(false)
-			dec.DelimString("\x00", false)
-			dec.DelimBytes([]byte{0}, false)
-			dec.RawString(3, false)
-			dec.RawBytes(3, false)
+			dec.DelString("\x00", false)
+			dec.DelBytes([]byte{0}, false)
 			dec.Tail(false)
 			return nil
 		})
@@ -341,14 +341,14 @@ func BenchmarkDecode(b *testing.B) {
 			dec.Float64()
 			dec.VarInt()
 			dec.VarUint()
-			dec.String(1, false)
-			dec.Bytes(1, false)
+			dec.String(3, false)
+			dec.Bytes(3, false)
+			dec.FixString(1, false)
+			dec.FixBytes(1, false)
 			dec.VarString(false)
 			dec.VarBytes(false)
-			dec.DelimString("\x00", false)
-			dec.DelimBytes([]byte{0}, false)
-			dec.RawString(3, false)
-			dec.RawBytes(3, false)
+			dec.DelString("\x00", false)
+			dec.DelBytes([]byte{0}, false)
 			dec.Tail(false)
 			return nil
 		})

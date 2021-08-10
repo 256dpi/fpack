@@ -227,33 +227,88 @@ func (d *Decoder) VarInt() int64 {
 	return num
 }
 
-// String reads a fixed length prefixed string. If the string is not cloned it
-// may change if the decoded byte slice changes.
-func (d *Decoder) String(lenSize int, clone bool) string {
-	return d.RawString(int(d.Uint(lenSize)), clone)
+// String reads a raw string. If the string is not cloned it may change if
+// the decoded byte slice changes.
+func (d *Decoder) String(length int, clone bool) string {
+	// skip if errored
+	if d.err != nil {
+		return ""
+	}
+
+	// check length
+	if len(d.buf) < length {
+		d.err = ErrBufferTooShort
+		return ""
+	}
+
+	// cast or set string
+	var str string
+	if clone {
+		str = string(d.buf[:length])
+		d.buf = d.buf[length:]
+	} else {
+		str = cast.ToString(d.buf[:length])
+		d.buf = d.buf[length:]
+	}
+
+	return str
 }
 
-// Bytes reads a fixed length prefixed byte slice. If the byte slice is not
+// Bytes reads a raw byte slice. If the byte slice is not cloned it may
+// change if the decoded byte slice changes.
+func (d *Decoder) Bytes(length int, clone bool) []byte {
+	// skip if errored
+	if d.err != nil {
+		return nil
+	}
+
+	// check length
+	if len(d.buf) < length {
+		d.err = ErrBufferTooShort
+		return nil
+	}
+
+	// clone or set bytes
+	var bytes []byte
+	if clone {
+		bytes = make([]byte, length)
+		copy(bytes, d.buf[:length])
+		d.buf = d.buf[length:]
+	} else {
+		bytes = d.buf[:length]
+		d.buf = d.buf[length:]
+	}
+
+	return bytes
+}
+
+// FixString reads a fixed length prefixed string. If the string is not cloned it
+// may change if the decoded byte slice changes.
+func (d *Decoder) FixString(lenSize int, clone bool) string {
+	return d.String(int(d.Uint(lenSize)), clone)
+}
+
+// FixBytes reads a fixed length prefixed byte slice. If the byte slice is not
 // cloned it may change if the decoded byte slice changes.
-func (d *Decoder) Bytes(lenSize int, clone bool) []byte {
-	return d.RawBytes(int(d.Uint(lenSize)), clone)
+func (d *Decoder) FixBytes(lenSize int, clone bool) []byte {
+	return d.Bytes(int(d.Uint(lenSize)), clone)
 }
 
 // VarString reads a variable length prefixed string. If the string is not
 // cloned it may change if the decoded byte slice changes.
 func (d *Decoder) VarString(clone bool) string {
-	return d.RawString(int(d.VarUint()), clone)
+	return d.String(int(d.VarUint()), clone)
 }
 
 // VarBytes reads a variable length prefixed byte slice. If the byte slice is
 // not cloned it may change if the decoded byte slice changes.
 func (d *Decoder) VarBytes(clone bool) []byte {
-	return d.RawBytes(int(d.VarUint()), clone)
+	return d.Bytes(int(d.VarUint()), clone)
 }
 
-// DelimString reads a suffix delimited string. If the string is not cloned it
+// DelString reads a suffix delimited string. If the string is not cloned it
 // may change if the decoded byte slice changes.
-func (d *Decoder) DelimString(delim string, clone bool) string {
+func (d *Decoder) DelString(delim string, clone bool) string {
 	// skip if errored
 	if d.err != nil {
 		return ""
@@ -280,9 +335,9 @@ func (d *Decoder) DelimString(delim string, clone bool) string {
 	return str
 }
 
-// DelimBytes reads a suffix delimited byte slice. If the byte slice is not
+// DelBytes reads a suffix delimited byte slice. If the byte slice is not
 // cloned it may change if the decoded byte slice changes.
-func (d *Decoder) DelimBytes(delim []byte, clone bool) []byte {
+func (d *Decoder) DelBytes(delim []byte, clone bool) []byte {
 	// skip if errored
 	if d.err != nil {
 		return nil
@@ -306,61 +361,6 @@ func (d *Decoder) DelimBytes(delim []byte, clone bool) []byte {
 
 	// slice
 	d.buf = d.buf[idx+len(delim):]
-
-	return bytes
-}
-
-// RawString reads a raw string. If the string is not cloned it may change if
-// the decoded byte slice changes.
-func (d *Decoder) RawString(length int, clone bool) string {
-	// skip if errored
-	if d.err != nil {
-		return ""
-	}
-
-	// check length
-	if len(d.buf) < length {
-		d.err = ErrBufferTooShort
-		return ""
-	}
-
-	// cast or set string
-	var str string
-	if clone {
-		str = string(d.buf[:length])
-		d.buf = d.buf[length:]
-	} else {
-		str = cast.ToString(d.buf[:length])
-		d.buf = d.buf[length:]
-	}
-
-	return str
-}
-
-// RawBytes reads a raw byte slice. If the byte slice is not cloned it may
-// change if the decoded byte slice changes.
-func (d *Decoder) RawBytes(length int, clone bool) []byte {
-	// skip if errored
-	if d.err != nil {
-		return nil
-	}
-
-	// check length
-	if len(d.buf) < length {
-		d.err = ErrBufferTooShort
-		return nil
-	}
-
-	// clone or set bytes
-	var bytes []byte
-	if clone {
-		bytes = make([]byte, length)
-		copy(bytes, d.buf[:length])
-		d.buf = d.buf[length:]
-	} else {
-		bytes = d.buf[:length]
-		d.buf = d.buf[length:]
-	}
 
 	return bytes
 }

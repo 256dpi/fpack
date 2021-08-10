@@ -23,14 +23,14 @@ func init() {
 	enc += "\x7F\xEF\xFF\xFF\xFF\xFF\xFF\xFF"
 	enc += "\x0e"
 	enc += "\x80\x04"
+	enc += "foo"
+	enc += "bar"
 	enc += "\x03foo"
 	enc += "\x03bar"
 	enc += "\x03foo"
 	enc += "\x03bar"
 	enc += "foo\x00"
 	enc += "bar\x00"
-	enc += "foo"
-	enc += "bar"
 	enc += "baz"
 	dummy = []byte(enc)
 }

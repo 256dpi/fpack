@@ -196,44 +196,8 @@ func (e *Encoder) VarUint(num uint64) {
 	e.buf = e.buf[n:]
 }
 
-// String writes a fixed length prefixed string.
-func (e *Encoder) String(str string, lenSize int) {
-	e.Uint(uint64(len(str)), lenSize)
-	e.RawString(str)
-}
-
-// Bytes writes a fixed length prefixed byte slice.
-func (e *Encoder) Bytes(buf []byte, lenSize int) {
-	e.Uint(uint64(len(buf)), lenSize)
-	e.RawBytes(buf)
-}
-
-// VarString writes a variable length prefixed string.
-func (e *Encoder) VarString(str string) {
-	e.VarUint(uint64(len(str)))
-	e.RawString(str)
-}
-
-// VarBytes writes a variable length prefixed byte slice.
-func (e *Encoder) VarBytes(buf []byte) {
-	e.VarUint(uint64(len(buf)))
-	e.RawBytes(buf)
-}
-
-// DelimString writes a suffix delimited string.
-func (e *Encoder) DelimString(str, delim string) {
-	e.RawString(str)
-	e.RawString(delim)
-}
-
-// DelimBytes writes a suffix delimited byte slice.
-func (e *Encoder) DelimBytes(buf, delim []byte) {
-	e.RawBytes(buf)
-	e.RawBytes(delim)
-}
-
-// RawString writes a raw string.
-func (e *Encoder) RawString(str string) {
+// String writes a raw string.
+func (e *Encoder) String(str string) {
 	// handle length
 	if e.buf == nil {
 		e.len += len(str)
@@ -245,8 +209,8 @@ func (e *Encoder) RawString(str string) {
 	e.buf = e.buf[n:]
 }
 
-// RawBytes writes a raw byte slice.
-func (e *Encoder) RawBytes(buf []byte) {
+// Bytes writes a raw byte slice.
+func (e *Encoder) Bytes(buf []byte) {
 	// handle length
 	if e.buf == nil {
 		e.len += len(buf)
@@ -256,6 +220,42 @@ func (e *Encoder) RawBytes(buf []byte) {
 	// write bytes
 	n := copy(e.buf, buf)
 	e.buf = e.buf[n:]
+}
+
+// FixString writes a fixed length prefixed string.
+func (e *Encoder) FixString(str string, lenSize int) {
+	e.Uint(uint64(len(str)), lenSize)
+	e.String(str)
+}
+
+// FixBytes writes a fixed length prefixed byte slice.
+func (e *Encoder) FixBytes(buf []byte, lenSize int) {
+	e.Uint(uint64(len(buf)), lenSize)
+	e.Bytes(buf)
+}
+
+// VarString writes a variable length prefixed string.
+func (e *Encoder) VarString(str string) {
+	e.VarUint(uint64(len(str)))
+	e.String(str)
+}
+
+// VarBytes writes a variable length prefixed byte slice.
+func (e *Encoder) VarBytes(buf []byte) {
+	e.VarUint(uint64(len(buf)))
+	e.Bytes(buf)
+}
+
+// DelString writes a suffix delimited string.
+func (e *Encoder) DelString(str, delim string) {
+	e.String(str)
+	e.String(delim)
+}
+
+// DelBytes writes a suffix delimited byte slice.
+func (e *Encoder) DelBytes(buf, delim []byte) {
+	e.Bytes(buf)
+	e.Bytes(delim)
 }
 
 // Tail writes a tail byte slice.

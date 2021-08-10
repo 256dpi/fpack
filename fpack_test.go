@@ -6,7 +6,7 @@ func Example() {
 	// encode
 	buf, ref, err := Encode(true, func(enc *Encoder) error {
 		enc.Uint8(42)
-		enc.String("Hello World!", 2)
+		enc.FixString("Hello World!", 2)
 		return nil
 	})
 	if err != nil {
@@ -21,7 +21,7 @@ func Example() {
 	var str string
 	err = Decode(buf, func(dec *Decoder) error {
 		num = dec.Uint8()
-		str = dec.String(2, false)
+		str = dec.FixString(2, false)
 		return nil
 	})
 	if err != nil {
