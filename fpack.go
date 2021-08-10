@@ -6,3 +6,6 @@ import "errors"
 
 // ErrBufferTooShort is returned if the provided buffer is too short.
 var ErrBufferTooShort = errors.New("buffer too short")
+
+// ErrRemainingBytes is returned if the provided buffer is not fully consumed.
+var ErrRemainingBytes = errors.New("remaining bytes")

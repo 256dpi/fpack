@@ -200,6 +200,14 @@ func TestDecodeShortBuffer(t *testing.T) {
 	}
 }
 
+func TestDecodeRemainingBytes(t *testing.T) {
+	err := Decode([]byte{42, 84}, func(dec *Decoder) error {
+		dec.Uint8()
+		return nil
+	})
+	assert.Equal(t, ErrRemainingBytes, err)
+}
+
 func TestDecodeAllocation(t *testing.T) {
 	assert.Equal(t, 0.0, testing.AllocsPerRun(10, func() {
 		_ = Decode(dummy, func(dec *Decoder) error {

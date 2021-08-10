@@ -35,6 +35,11 @@ func (d *Decoder) UseLittleEndian() {
 	d.bo = binary.LittleEndian
 }
 
+// Length returns the remaining length of the buffer.
+func (d *Decoder) Length() int {
+	return len(d.buf)
+}
+
 // Error will return the current error.
 func (d *Decoder) Error() error {
 	return d.err
@@ -388,7 +393,8 @@ var decoderPool = sync.Pool{
 
 // Decode will decode data using the provided decoding function. The function is
 // run once to decode the data. It will return ErrBufferTooShort if the buffer
-// was not long enough to read all data or any error returned by the callback.
+// was not long enough to read all data, ErrRemainingBytes if the provided
+// buffers has not been full consumed or any error returned by the callback.
 func Decode(bytes []byte, fn func(dec *Decoder) error) error {
 	// borrow
 	dec := decoderPool.Get().(*Decoder)
@@ -402,18 +408,30 @@ func Decode(bytes []byte, fn func(dec *Decoder) error) error {
 
 	// decode
 	err := fn(dec)
-	if err == nil {
-		err = dec.Error()
+	if err != nil {
+		return err
 	}
 
-	return err
+	// check error
+	err = dec.Error()
+	if err != nil {
+		return err
+	}
+
+	// check length
+	if dec.Length() != 0 {
+		return ErrRemainingBytes
+	}
+
+	return nil
 }
 
 // MustDecode wraps Decode but omits error propagation. It will return false if
-// the buffer was not long enough to read all data.
+// the buffer was not long enough to read all data or the buffer has not been
+// fully consumed.
 func MustDecode(bytes []byte, fn func(dec *Decoder)) bool {
 	return Decode(bytes, func(dec *Decoder) error {
 		fn(dec)
 		return nil
-	}) != ErrBufferTooShort
+	}) == nil
 }
