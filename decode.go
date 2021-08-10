@@ -23,16 +23,16 @@ func NewDecoder(buf []byte) *Decoder {
 	}
 }
 
-// UseLittleEndian will set the used binary byte order to little endian.
-func (d *Decoder) UseLittleEndian() {
-	d.bo = binary.LittleEndian
-}
-
 // Reset will reset the decoder.
 func (d *Decoder) Reset(buf []byte) {
 	d.bo = binary.BigEndian
 	d.buf = buf
 	d.err = nil
+}
+
+// UseLittleEndian will set the used binary byte order to little endian.
+func (d *Decoder) UseLittleEndian() {
+	d.bo = binary.LittleEndian
 }
 
 // Error will return the current error.

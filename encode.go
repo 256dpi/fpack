@@ -21,6 +21,13 @@ func NewEncoder() *Encoder {
 	}
 }
 
+// Reset will reset the encoder. Pass nil so set the encoder to counting mode.
+func (e *Encoder) Reset(buf []byte) {
+	e.bo = binary.BigEndian
+	e.len = 0
+	e.buf = buf
+}
+
 // UseLittleEndian will set the used binary byte order to little endian.
 func (e *Encoder) UseLittleEndian() {
 	e.bo = binary.LittleEndian
@@ -34,13 +41,6 @@ func (e *Encoder) Counting() bool {
 // Length will return the accumulated length.
 func (e *Encoder) Length() int {
 	return e.len
-}
-
-// Reset will reset the encoder.
-func (e *Encoder) Reset(buf []byte) {
-	e.bo = binary.BigEndian
-	e.len = 0
-	e.buf = buf
 }
 
 // Skip the specified amount of bytes.
