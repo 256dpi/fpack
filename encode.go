@@ -209,8 +209,8 @@ func (e *Encoder) String(str string, lenSize int) {
 	e.Uint(uint64(len(str)), lenSize)
 
 	// write string
-	copy(e.buf, str)
-	e.buf = e.buf[len(str):]
+	n := copy(e.buf, str)
+	e.buf = e.buf[n:]
 }
 
 // Bytes writes a fixed length prefixed byte slice.
@@ -226,8 +226,8 @@ func (e *Encoder) Bytes(buf []byte, lenSize int) {
 	e.Uint(uint64(len(buf)), lenSize)
 
 	// write bytes
-	copy(e.buf, buf)
-	e.buf = e.buf[len(buf):]
+	n := copy(e.buf, buf)
+	e.buf = e.buf[n:]
 }
 
 // VarString writes a variable length prefixed string.
@@ -244,8 +244,8 @@ func (e *Encoder) VarString(str string) {
 	e.buf = e.buf[n:]
 
 	// write string
-	copy(e.buf, str)
-	e.buf = e.buf[len(str):]
+	n = copy(e.buf, str)
+	e.buf = e.buf[n:]
 }
 
 // VarBytes writes a variable length prefixed byte slice.
@@ -262,8 +262,38 @@ func (e *Encoder) VarBytes(buf []byte) {
 	e.buf = e.buf[n:]
 
 	// write bytes
-	copy(e.buf, buf)
-	e.buf = e.buf[len(buf):]
+	n = copy(e.buf, buf)
+	e.buf = e.buf[n:]
+}
+
+// DelimString writes a suffix delimited string.
+func (e *Encoder) DelimString(str, delim string) {
+	// handle length
+	if e.buf == nil {
+		e.len += len(str)
+		e.len += len(delim)
+		return
+	}
+
+	// write string and delimiter
+	n := copy(e.buf, str)
+	n += copy(e.buf[n:], delim)
+	e.buf = e.buf[n:]
+}
+
+// DelimBytes writes a suffix delimited byte slice.
+func (e *Encoder) DelimBytes(buf, delim []byte) {
+	// handle length
+	if e.buf == nil {
+		e.len += len(buf)
+		e.len += len(delim)
+		return
+	}
+
+	// write string and delimiter
+	n := copy(e.buf, buf)
+	n += copy(e.buf[n:], delim)
+	e.buf = e.buf[n:]
 }
 
 // Tail writes a tail byte slice.
@@ -275,8 +305,8 @@ func (e *Encoder) Tail(buf []byte) {
 	}
 
 	// write bytes
-	copy(e.buf, buf)
-	e.buf = e.buf[len(buf):]
+	n := copy(e.buf, buf)
+	e.buf = e.buf[n:]
 }
 
 var encoderPool = sync.Pool{

@@ -39,6 +39,8 @@ func testEncode(t *testing.T, borrow bool) {
 		enc.Bytes([]byte("bar"), 1)
 		enc.VarString("foo")
 		enc.VarBytes([]byte("bar"))
+		enc.DelimString("foo", "\x00")
+		enc.DelimBytes([]byte("bar"), []byte{0})
 		enc.Tail([]byte("baz"))
 		return nil
 	})
@@ -105,6 +107,8 @@ func TestEncodeAllocation(t *testing.T) {
 			enc.Bytes([]byte("bar"), 1)
 			enc.VarString("foo")
 			enc.VarBytes([]byte("bar"))
+			enc.DelimString("foo", "\x00")
+			enc.DelimBytes([]byte("bar"), []byte{0})
 			enc.Tail([]byte("baz"))
 			return nil
 		})
@@ -213,6 +217,8 @@ func BenchmarkEncode(b *testing.B) {
 			enc.Bytes([]byte("bar"), 1)
 			enc.VarString("foo")
 			enc.VarBytes([]byte("bar"))
+			enc.DelimString("foo", "\x00")
+			enc.DelimBytes([]byte("bar"), []byte{0})
 			enc.Tail([]byte("baz"))
 			return nil
 		})

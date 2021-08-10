@@ -1,6 +1,7 @@
 package fpack
 
 import (
+	"bytes"
 	"encoding/binary"
 	"math"
 	"sync"
@@ -359,6 +360,65 @@ func (d *Decoder) VarBytes(clone bool) []byte {
 		bytes = d.buf[:length]
 		d.buf = d.buf[length:]
 	}
+
+	return bytes
+}
+
+// DelimString reads a suffix delimited string. If the string is not cloned it
+// may change if the decoded byte slice changes.
+func (d *Decoder) DelimString(delim string, clone bool) string {
+	// skip if errored
+	if d.err != nil {
+		return ""
+	}
+
+	// find index
+	idx := bytes.Index(d.buf, cast.ToBytes(delim))
+	if idx < 0 {
+		d.err = ErrBufferTooShort
+		return ""
+	}
+
+	// cast or set string
+	var str string
+	if clone {
+		str = string(d.buf[:idx])
+	} else {
+		str = cast.ToString(d.buf[:idx])
+	}
+
+	// slice
+	d.buf = d.buf[idx+len(delim):]
+
+	return str
+}
+
+// DelimBytes reads a suffix delimited byte slice. If the byte slice is not
+// cloned it may change if the decoded byte slice changes.
+func (d *Decoder) DelimBytes(delim []byte, clone bool) []byte {
+	// skip if errored
+	if d.err != nil {
+		return nil
+	}
+
+	// find index
+	idx := bytes.Index(d.buf, delim)
+	if idx < 0 {
+		d.err = ErrBufferTooShort
+		return nil
+	}
+
+	// cast or set bytes
+	var bytes []byte
+	if clone {
+		bytes = make([]byte, idx)
+		copy(bytes, d.buf[:idx])
+	} else {
+		bytes = d.buf[:idx]
+	}
+
+	// slice
+	d.buf = d.buf[idx+len(delim):]
 
 	return bytes
 }
