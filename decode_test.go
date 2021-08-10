@@ -149,6 +149,12 @@ func TestDecodeErrors(t *testing.T) {
 			dec.VarBytes(true)
 		},
 		func(dec *Decoder) {
+			dec.DelimString("\x00", true)
+		},
+		func(dec *Decoder) {
+			dec.DelimBytes([]byte("\x00"), true)
+		},
+		func(dec *Decoder) {
 			dec.Tail(true)
 		},
 	}
@@ -161,6 +167,11 @@ func TestDecodeErrors(t *testing.T) {
 		})
 		assert.Equal(t, io.EOF, err)
 	}
+
+	err := Decode(nil, func(enc *Decoder) error {
+		return io.EOF
+	})
+	assert.Equal(t, io.EOF, err)
 }
 
 func TestDecodeShortBuffer(t *testing.T) {
@@ -215,6 +226,12 @@ func TestDecodeShortBuffer(t *testing.T) {
 		func(dec *Decoder) {
 			dec.VarBytes(true)
 		},
+		func(dec *Decoder) {
+			dec.DelimString("\x00", true)
+		},
+		func(dec *Decoder) {
+			dec.DelimBytes([]byte("\x00"), true)
+		},
 	}
 
 	for i, item := range table {
@@ -236,15 +253,19 @@ func TestDecodeRemainingBytes(t *testing.T) {
 
 func TestDecodeAllocation(t *testing.T) {
 	assert.Equal(t, 0.0, testing.AllocsPerRun(10, func() {
-		_ = Decode(dummy, func(dec *Decoder) error {
+		err := Decode(dummy, func(dec *Decoder) error {
 			dec.Skip(3)
 			dec.Bool()
 			dec.Bool()
 			dec.Int8()
+			dec.Int8()
 			dec.Int16()
+			dec.Int16()
+			dec.Int32()
 			dec.Int32()
 			dec.Int64()
 			dec.Int64()
+			dec.Int(4)
 			dec.Uint8()
 			dec.Uint16()
 			dec.Uint32()
@@ -264,6 +285,7 @@ func TestDecodeAllocation(t *testing.T) {
 			dec.Tail(false)
 			return nil
 		})
+		assert.NoError(t, err)
 	}))
 }
 
