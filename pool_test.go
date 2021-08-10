@@ -98,6 +98,10 @@ func BenchmarkPool(b *testing.B) {
 }
 
 func BenchmarkPoolClasses(b *testing.B) {
+	if testing.Short() {
+		b.Skip()
+	}
+
 	for _, class := range classes {
 		b.Run(strconv.Itoa(class), func(b *testing.B) {
 			list := make([][]byte, b.N)
@@ -115,6 +119,10 @@ func BenchmarkPoolClasses(b *testing.B) {
 }
 
 func BenchmarkMakeClasses(b *testing.B) {
+	if testing.Short() {
+		b.Skip()
+	}
+
 	for _, class := range classes {
 		b.Run(strconv.Itoa(class), func(b *testing.B) {
 			list := make([][]byte, b.N)
