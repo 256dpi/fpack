@@ -269,17 +269,17 @@ func (d *Decoder) Bytes(length int, clone bool) []byte {
 	}
 
 	// clone or set bytes
-	var bytes []byte
+	var buf []byte
 	if clone {
-		bytes = make([]byte, length)
-		copy(bytes, d.buf[:length])
+		buf = make([]byte, length)
+		copy(buf, d.buf[:length])
 		d.buf = d.buf[length:]
 	} else {
-		bytes = d.buf[:length]
+		buf = d.buf[:length]
 		d.buf = d.buf[length:]
 	}
 
-	return bytes
+	return buf
 }
 
 // FixString reads a fixed length prefixed string. If the string is not cloned it
@@ -351,18 +351,18 @@ func (d *Decoder) DelBytes(delim []byte, clone bool) []byte {
 	}
 
 	// cast or set bytes
-	var bytes []byte
+	var buf []byte
 	if clone {
-		bytes = make([]byte, idx)
-		copy(bytes, d.buf[:idx])
+		buf = make([]byte, idx)
+		copy(buf, d.buf[:idx])
 	} else {
-		bytes = d.buf[:idx]
+		buf = d.buf[:idx]
 	}
 
 	// slice
 	d.buf = d.buf[idx+len(delim):]
 
-	return bytes
+	return buf
 }
 
 // Tail reads a tail byte slice. If the byte slice is not cloned it may change
@@ -374,17 +374,17 @@ func (d *Decoder) Tail(clone bool) []byte {
 	}
 
 	// clone or set bytes
-	var bytes []byte
+	var buf []byte
 	if clone {
-		bytes = make([]byte, len(d.buf))
-		copy(bytes, d.buf[:len(d.buf)])
+		buf = make([]byte, len(d.buf))
+		copy(buf, d.buf[:len(d.buf)])
 		d.buf = d.buf[len(d.buf):]
 	} else {
-		bytes = d.buf[:len(d.buf)]
+		buf = d.buf[:len(d.buf)]
 		d.buf = d.buf[len(d.buf):]
 	}
 
-	return bytes
+	return buf
 }
 
 var decoderPool = sync.Pool{
