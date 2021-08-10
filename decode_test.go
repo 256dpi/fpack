@@ -105,6 +105,20 @@ func testDecode(t *testing.T, clone bool) {
 	assert.Equal(t, []byte("baz"), tail)
 }
 
+func TestDecodeRemaining(t *testing.T) {
+	err := Decode([]byte{42, 84}, func(dec *Decoder) error {
+		assert.True(t, dec.Remaining())
+		dec.Uint8()
+		assert.True(t, dec.Remaining())
+		dec.Uint8()
+		assert.False(t, dec.Remaining())
+		dec.Uint8()
+		assert.False(t, dec.Remaining())
+		return nil
+	})
+	assert.Error(t, err)
+}
+
 func TestDecodeErrors(t *testing.T) {
 	table := []func(*Decoder){
 		func(dec *Decoder) {

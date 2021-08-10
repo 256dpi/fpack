@@ -46,6 +46,11 @@ func (d *Decoder) Error() error {
 	return d.err
 }
 
+// Remaining returns whether more bytes can be decoded.
+func (d *Decoder) Remaining() bool {
+	return len(d.buf) > 0 && d.err == nil
+}
+
 // Skip the specified amount of bytes.
 func (d *Decoder) Skip(num int) {
 	// skip if errored
