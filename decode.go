@@ -368,23 +368,7 @@ func (d *Decoder) DelBytes(delim []byte, clone bool) []byte {
 // Tail reads a tail byte slice. If the byte slice is not cloned it may change
 // if the decoded byte slice changes.
 func (d *Decoder) Tail(clone bool) []byte {
-	// skip if errored
-	if d.err != nil {
-		return nil
-	}
-
-	// clone or set bytes
-	var buf []byte
-	if clone {
-		buf = make([]byte, len(d.buf))
-		copy(buf, d.buf[:len(d.buf)])
-		d.buf = d.buf[len(d.buf):]
-	} else {
-		buf = d.buf[:len(d.buf)]
-		d.buf = d.buf[len(d.buf):]
-	}
-
-	return buf
+	return d.Bytes(len(d.buf), clone)
 }
 
 var decoderPool = sync.Pool{
