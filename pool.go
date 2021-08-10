@@ -16,7 +16,7 @@ type buffer struct {
 }
 
 func init() {
-	// create 16 pools from 1KB to 32MB
+	// create 16 pools from 1 KB to 32 MB
 	for i := 0; i < 16; i++ {
 		num := int8(i)
 		size := 1 << (i + 10)

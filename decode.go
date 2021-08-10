@@ -228,7 +228,7 @@ func (d *Decoder) VarInt() int64 {
 }
 
 // String reads a raw string. If the string is not cloned it may change if
-// the decoded byte slice changes.
+// the source byte slice changes.
 func (d *Decoder) String(length int, clone bool) string {
 	// skip if errored
 	if d.err != nil {
@@ -255,7 +255,7 @@ func (d *Decoder) String(length int, clone bool) string {
 }
 
 // Bytes reads a raw byte slice. If the byte slice is not cloned it may
-// change if the decoded byte slice changes.
+// change if the source byte slice changes.
 func (d *Decoder) Bytes(length int, clone bool) []byte {
 	// skip if errored
 	if d.err != nil {
@@ -283,31 +283,31 @@ func (d *Decoder) Bytes(length int, clone bool) []byte {
 }
 
 // FixString reads a fixed length prefixed string. If the string is not cloned it
-// may change if the decoded byte slice changes.
+// may change if the source byte slice changes.
 func (d *Decoder) FixString(lenSize int, clone bool) string {
 	return d.String(int(d.Uint(lenSize)), clone)
 }
 
 // FixBytes reads a fixed length prefixed byte slice. If the byte slice is not
-// cloned it may change if the decoded byte slice changes.
+// cloned it may change if the source byte slice changes.
 func (d *Decoder) FixBytes(lenSize int, clone bool) []byte {
 	return d.Bytes(int(d.Uint(lenSize)), clone)
 }
 
 // VarString reads a variable length prefixed string. If the string is not
-// cloned it may change if the decoded byte slice changes.
+// cloned it may change if the source byte slice changes.
 func (d *Decoder) VarString(clone bool) string {
 	return d.String(int(d.VarUint()), clone)
 }
 
 // VarBytes reads a variable length prefixed byte slice. If the byte slice is
-// not cloned it may change if the decoded byte slice changes.
+// not cloned it may change if the source byte slice changes.
 func (d *Decoder) VarBytes(clone bool) []byte {
 	return d.Bytes(int(d.VarUint()), clone)
 }
 
 // DelString reads a suffix delimited string. If the string is not cloned it
-// may change if the decoded byte slice changes.
+// may change if the source byte slice changes.
 func (d *Decoder) DelString(delim string, clone bool) string {
 	// skip if errored
 	if d.err != nil {
@@ -336,7 +336,7 @@ func (d *Decoder) DelString(delim string, clone bool) string {
 }
 
 // DelBytes reads a suffix delimited byte slice. If the byte slice is not
-// cloned it may change if the decoded byte slice changes.
+// cloned it may change if the source byte slice changes.
 func (d *Decoder) DelBytes(delim []byte, clone bool) []byte {
 	// skip if errored
 	if d.err != nil {
@@ -366,7 +366,7 @@ func (d *Decoder) DelBytes(delim []byte, clone bool) []byte {
 }
 
 // Tail reads a tail byte slice. If the byte slice is not cloned it may change
-// if the decoded byte slice changes.
+// if the source byte slice changes.
 func (d *Decoder) Tail(clone bool) []byte {
 	return d.Bytes(len(d.buf), clone)
 }
