@@ -1,6 +1,7 @@
 package fpack
 
 import (
+	"math"
 	"runtime"
 	"strconv"
 	"testing"
@@ -70,6 +71,12 @@ func TestDoubleRelease(t *testing.T) {
 	assert.PanicsWithValue(t, "fpack: generation mismatch", func() {
 		ref2.Release()
 	})
+}
+
+func TestGenerationOverflow(t *testing.T) {
+	generation = math.MaxUint64
+	_, ref := Borrow(123)
+	ref.Release()
 }
 
 func TestRefInterface(t *testing.T) {
