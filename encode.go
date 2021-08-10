@@ -198,101 +198,63 @@ func (e *Encoder) VarUint(num uint64) {
 
 // String writes a fixed length prefixed string.
 func (e *Encoder) String(str string, lenSize int) {
-	// handle length
-	if e.buf == nil {
-		e.len += lenSize
-		e.len += len(str)
-		return
-	}
-
-	// write length
 	e.Uint(uint64(len(str)), lenSize)
-
-	// write string
-	n := copy(e.buf, str)
-	e.buf = e.buf[n:]
+	e.RawString(str)
 }
 
 // Bytes writes a fixed length prefixed byte slice.
 func (e *Encoder) Bytes(buf []byte, lenSize int) {
-	// handle length
-	if e.buf == nil {
-		e.len += lenSize
-		e.len += len(buf)
-		return
-	}
-
-	// write length
 	e.Uint(uint64(len(buf)), lenSize)
-
-	// write bytes
-	n := copy(e.buf, buf)
-	e.buf = e.buf[n:]
+	e.RawBytes(buf)
 }
 
 // VarString writes a variable length prefixed string.
 func (e *Encoder) VarString(str string) {
-	// handle length
-	if e.buf == nil {
-		e.len += binary.PutUvarint(e.b10[:], uint64(len(str)))
-		e.len += len(str)
-		return
-	}
-
-	// write length
-	n := binary.PutUvarint(e.buf, uint64(len(str)))
-	e.buf = e.buf[n:]
-
-	// write string
-	n = copy(e.buf, str)
-	e.buf = e.buf[n:]
+	e.VarUint(uint64(len(str)))
+	e.RawString(str)
 }
 
 // VarBytes writes a variable length prefixed byte slice.
 func (e *Encoder) VarBytes(buf []byte) {
-	// handle length
-	if e.buf == nil {
-		e.len += binary.PutUvarint(e.b10[:], uint64(len(buf)))
-		e.len += len(buf)
-		return
-	}
-
-	// write length
-	n := binary.PutUvarint(e.buf, uint64(len(buf)))
-	e.buf = e.buf[n:]
-
-	// write bytes
-	n = copy(e.buf, buf)
-	e.buf = e.buf[n:]
+	e.VarUint(uint64(len(buf)))
+	e.RawBytes(buf)
 }
 
 // DelimString writes a suffix delimited string.
 func (e *Encoder) DelimString(str, delim string) {
-	// handle length
-	if e.buf == nil {
-		e.len += len(str)
-		e.len += len(delim)
-		return
-	}
-
-	// write string and delimiter
-	n := copy(e.buf, str)
-	n += copy(e.buf[n:], delim)
-	e.buf = e.buf[n:]
+	e.RawString(str)
+	e.RawString(delim)
 }
 
 // DelimBytes writes a suffix delimited byte slice.
 func (e *Encoder) DelimBytes(buf, delim []byte) {
+	e.RawBytes(buf)
+	e.RawBytes(delim)
+}
+
+// RawString writes a raw string.
+func (e *Encoder) RawString(str string) {
 	// handle length
 	if e.buf == nil {
-		e.len += len(buf)
-		e.len += len(delim)
+		e.len += len(str)
 		return
 	}
 
-	// write string and delimiter
+	// write string
+	n := copy(e.buf, str)
+	e.buf = e.buf[n:]
+}
+
+// RawBytes writes a raw byte slice.
+func (e *Encoder) RawBytes(buf []byte) {
+	// handle length
+	if e.buf == nil {
+		e.len += len(buf)
+		return
+	}
+
+	// write bytes
 	n := copy(e.buf, buf)
-	n += copy(e.buf[n:], delim)
 	e.buf = e.buf[n:]
 }
 

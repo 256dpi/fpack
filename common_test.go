@@ -29,6 +29,8 @@ func init() {
 	enc += "\x03bar"
 	enc += "foo\x00"
 	enc += "bar\x00"
+	enc += "foo"
+	enc += "bar"
 	enc += "baz"
 	dummy = []byte(enc)
 }

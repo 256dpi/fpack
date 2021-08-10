@@ -39,6 +39,8 @@ func testDecode(t *testing.T, clone bool) {
 	var vb []byte
 	var ds string
 	var db []byte
+	var rs string
+	var rb []byte
 	var tail []byte
 	err := Decode(dummy, func(dec *Decoder) error {
 		dec.Skip(3)
@@ -65,8 +67,10 @@ func testDecode(t *testing.T, clone bool) {
 		fb = dec.Bytes(1, clone)
 		vs = dec.VarString(clone)
 		vb = dec.VarBytes(clone)
-		ds = dec.DelimString("\x00", false)
-		db = dec.DelimBytes([]byte{0}, false)
+		ds = dec.DelimString("\x00", clone)
+		db = dec.DelimBytes([]byte{0}, clone)
+		rs = dec.RawString(3, clone)
+		rb = dec.RawBytes(3, clone)
 		tail = dec.Tail(clone)
 		return nil
 	})
@@ -96,6 +100,8 @@ func testDecode(t *testing.T, clone bool) {
 	assert.Equal(t, []byte("bar"), vb)
 	assert.Equal(t, "foo", ds)
 	assert.Equal(t, []byte("bar"), db)
+	assert.Equal(t, "foo", rs)
+	assert.Equal(t, []byte("bar"), rb)
 	assert.Equal(t, []byte("baz"), tail)
 }
 
@@ -239,6 +245,8 @@ func TestDecodeAllocation(t *testing.T) {
 			dec.VarBytes(false)
 			dec.DelimString("\x00", false)
 			dec.DelimBytes([]byte{0}, false)
+			dec.RawString(3, false)
+			dec.RawBytes(3, false)
 			dec.Tail(false)
 			return nil
 		})
@@ -303,6 +311,8 @@ func BenchmarkDecode(b *testing.B) {
 			dec.VarBytes(false)
 			dec.DelimString("\x00", false)
 			dec.DelimBytes([]byte{0}, false)
+			dec.RawString(3, false)
+			dec.RawBytes(3, false)
 			dec.Tail(false)
 			return nil
 		})
