@@ -8,38 +8,64 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func encodeDummy(enc *Encoder) {
+	enc.Skip(3)
+	enc.Bool(true)
+	enc.Bool(false)
+	enc.Int8(math.MinInt8)
+	enc.Int8(math.MaxInt8)
+	enc.Int16(math.MinInt16)
+	enc.Int16(math.MaxInt16)
+	enc.Int32(math.MinInt32)
+	enc.Int32(math.MaxInt32)
+	enc.Int64(math.MinInt64)
+	enc.Int64(math.MaxInt64)
+	enc.Int(-42, 4)
+	enc.Uint8(math.MaxUint8)
+	enc.Uint16(math.MaxUint16)
+	enc.Uint32(math.MaxUint32)
+	enc.Uint64(math.MaxUint64)
+	enc.Float32(math.MaxFloat32)
+	enc.Float64(math.MaxFloat64)
+	enc.VarInt(7)
+	enc.VarUint(512)
+	enc.String("foo")
+	enc.Bytes([]byte("bar"))
+	enc.FixString("foo", 1)
+	enc.FixBytes([]byte("bar"), 1)
+	enc.VarString("foo")
+	enc.VarBytes([]byte("bar"))
+	enc.DelString("foo", "\x00")
+	enc.DelBytes([]byte("bar"), []byte{0})
+	enc.Tail([]byte("baz"))
+}
+
+func TestMeasure(t *testing.T) {
+	length, err := Measure(func(enc *Encoder) error {
+		encodeDummy(enc)
+		return nil
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, len(dummy), length)
+}
+
+func TestEncoderError(t *testing.T) {
+	length, err := Measure(func(enc *Encoder) error {
+		return io.EOF
+	})
+	assert.Equal(t, io.EOF, err)
+	assert.Zero(t, length)
+}
+
+func TestMustMeasure(t *testing.T) {
+	length := MustMeasure(encodeDummy)
+	assert.Equal(t, len(dummy), length)
+}
+
 func TestEncode(t *testing.T) {
 	withAndWithoutPool(func(pool *Pool) {
 		res, _, err := Encode(pool, func(enc *Encoder) error {
-			enc.Skip(3)
-			enc.Bool(true)
-			enc.Bool(false)
-			enc.Int8(math.MinInt8)
-			enc.Int8(math.MaxInt8)
-			enc.Int16(math.MinInt16)
-			enc.Int16(math.MaxInt16)
-			enc.Int32(math.MinInt32)
-			enc.Int32(math.MaxInt32)
-			enc.Int64(math.MinInt64)
-			enc.Int64(math.MaxInt64)
-			enc.Int(-42, 4)
-			enc.Uint8(math.MaxUint8)
-			enc.Uint16(math.MaxUint16)
-			enc.Uint32(math.MaxUint32)
-			enc.Uint64(math.MaxUint64)
-			enc.Float32(math.MaxFloat32)
-			enc.Float64(math.MaxFloat64)
-			enc.VarInt(7)
-			enc.VarUint(512)
-			enc.String("foo")
-			enc.Bytes([]byte("bar"))
-			enc.FixString("foo", 1)
-			enc.FixBytes([]byte("bar"), 1)
-			enc.VarString("foo")
-			enc.VarBytes([]byte("bar"))
-			enc.DelString("foo", "\x00")
-			enc.DelBytes([]byte("bar"), []byte{0})
-			enc.Tail([]byte("baz"))
+			encodeDummy(enc)
 			return nil
 		})
 		assert.NoError(t, err)
@@ -76,31 +102,7 @@ func TestEncodeAllocation(t *testing.T) {
 		}
 		assert.Equal(t, allocs, testing.AllocsPerRun(10, func() {
 			_, ref, _ := Encode(pool, func(enc *Encoder) error {
-				enc.Skip(3)
-				enc.Bool(true)
-				enc.Bool(false)
-				enc.Int8(math.MaxInt8)
-				enc.Int16(math.MaxInt16)
-				enc.Int32(math.MaxInt32)
-				enc.Int64(math.MaxInt64)
-				enc.Int64(math.MinInt64)
-				enc.Uint8(math.MaxUint8)
-				enc.Uint16(math.MaxUint16)
-				enc.Uint32(math.MaxUint32)
-				enc.Uint64(math.MaxUint64)
-				enc.Float32(math.MaxFloat32)
-				enc.Float64(math.MaxFloat64)
-				enc.VarInt(7)
-				enc.VarUint(512)
-				enc.String("foo")
-				enc.Bytes([]byte("bar"))
-				enc.FixString("foo", 1)
-				enc.FixBytes([]byte("bar"), 1)
-				enc.VarString("foo")
-				enc.VarBytes([]byte("bar"))
-				enc.DelString("foo", "\x00")
-				enc.DelBytes([]byte("bar"), []byte{0})
-				enc.Tail([]byte("baz"))
+				encodeDummy(enc)
 				return nil
 			})
 			ref.Release()
@@ -189,31 +191,7 @@ func BenchmarkEncode(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		_, ref, err := Encode(Global(), func(enc *Encoder) error {
-			enc.Skip(3)
-			enc.Bool(true)
-			enc.Bool(false)
-			enc.Int8(math.MaxInt8)
-			enc.Int16(math.MaxInt16)
-			enc.Int32(math.MaxInt32)
-			enc.Int64(math.MaxInt64)
-			enc.Int64(math.MinInt64)
-			enc.Uint8(math.MaxUint8)
-			enc.Uint16(math.MaxUint16)
-			enc.Uint32(math.MaxUint32)
-			enc.Uint64(math.MaxUint64)
-			enc.Float32(math.MaxFloat32)
-			enc.Float64(math.MaxFloat64)
-			enc.VarInt(7)
-			enc.VarUint(512)
-			enc.String("foo")
-			enc.Bytes([]byte("bar"))
-			enc.FixString("foo", 1)
-			enc.FixBytes([]byte("bar"), 1)
-			enc.VarString("foo")
-			enc.VarBytes([]byte("bar"))
-			enc.DelString("foo", "\x00")
-			enc.DelBytes([]byte("bar"), []byte{0})
-			enc.Tail([]byte("baz"))
+			encodeDummy(enc)
 			return nil
 		})
 		if err != nil {

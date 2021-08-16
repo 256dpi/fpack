@@ -12,6 +12,41 @@ var encoderPool = sync.Pool{
 	},
 }
 
+// Measure will measure the required byte slice to run the provided encoding
+// function. Any error returned by the callback is returned immediately.
+func Measure(fn func(enc *Encoder) error) (int, error) {
+	// borrow
+	enc := encoderPool.Get().(*Encoder)
+
+	// recycle
+	defer func() {
+		enc.Reset(nil)
+		encoderPool.Put(enc)
+	}()
+
+	// count
+	err := fn(enc)
+	if err != nil {
+		return 0, err
+	}
+
+	// get length
+	length := enc.Length()
+
+	return length, nil
+}
+
+// MustMeasure wraps Measure but omits the error propagation.
+func MustMeasure(fn func(enc *Encoder)) int {
+	// encode without error
+	length, _ := Measure(func(enc *Encoder) error {
+		fn(enc)
+		return nil
+	})
+
+	return length
+}
+
 // Encode will encode data using the provided encoding function. The function
 // is run once to assess the length of the buffer and once to encode the data.
 // Any error returned by the callback is returned immediately.
