@@ -4,7 +4,7 @@ import "fmt"
 
 func Example() {
 	// encode
-	buf, ref, err := Encode(true, func(enc *Encoder) error {
+	buf, ref, err := Encode(Global(), func(enc *Encoder) error {
 		enc.Uint8(42)
 		enc.FixString("Hello World!", 2)
 		return nil

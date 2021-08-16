@@ -15,8 +15,8 @@ var encoderPool = sync.Pool{
 // Encode will encode data using the provided encoding function. The function
 // is run once to assess the length of the buffer and once to encode the data.
 // Any error returned by the callback is returned immediately.
-func Encode(borrow bool, fn func(enc *Encoder) error) ([]byte, Ref, error) {
-	buf, _, ref, err := encode(nil, &borrow, fn)
+func Encode(pool *Pool, fn func(enc *Encoder) error) ([]byte, Ref, error) {
+	buf, _, ref, err := encode(pool, nil, false, fn)
 	return buf, ref, err
 }
 
@@ -26,11 +26,11 @@ func Encode(borrow bool, fn func(enc *Encoder) error) ([]byte, Ref, error) {
 // returned immediately. If the provided buffer is too small ErrBufferTooShort
 // is returned.
 func EncodeInto(buf []byte, fn func(enc *Encoder) error) (int, error) {
-	_, n, _, err := encode(buf, nil, fn)
+	_, n, _, err := encode(nil, buf, true, fn)
 	return n, err
 }
 
-func encode(buf []byte, borrow *bool, fn func(enc *Encoder) error) ([]byte, int, Ref, error) {
+func encode(pool *Pool, buf []byte, withBuf bool, fn func(enc *Encoder) error) ([]byte, int, Ref, error) {
 	// borrow
 	enc := encoderPool.Get().(*Encoder)
 
@@ -50,15 +50,15 @@ func encode(buf []byte, borrow *bool, fn func(enc *Encoder) error) ([]byte, int,
 	length := enc.Length()
 
 	// check length
-	if borrow == nil && len(buf) < length {
+	if withBuf && len(buf) < length {
 		return nil, 0, Ref{}, ErrBufferTooShort
 	}
 
 	// get buffer
 	var ref Ref
-	if borrow != nil {
-		if *borrow {
-			buf, ref = Borrow(length)
+	if !withBuf {
+		if pool != nil {
+			buf, ref = pool.Borrow(length)
 			buf = buf[:enc.len]
 		} else {
 			buf = make([]byte, length)
@@ -79,9 +79,9 @@ func encode(buf []byte, borrow *bool, fn func(enc *Encoder) error) ([]byte, int,
 }
 
 // MustEncode wraps Encode but omits the error propagation.
-func MustEncode(borrow bool, fn func(enc *Encoder)) ([]byte, Ref) {
+func MustEncode(pool *Pool, fn func(enc *Encoder)) ([]byte, Ref) {
 	// encode without error
-	data, ref, _ := Encode(borrow, func(enc *Encoder) error {
+	data, ref, _ := Encode(pool, func(enc *Encoder) error {
 		fn(enc)
 		return nil
 	})
