@@ -36,8 +36,8 @@ type buffer struct {
 
 // Pool is dynamic slice length pool.
 type Pool struct {
-	generation uint64
-	pools      []*sync.Pool
+	gen   uint64
+	pools []*sync.Pool
 }
 
 // NewPool creates and returns a new pool.
@@ -113,9 +113,9 @@ func (p *Pool) Borrow(len int) ([]byte, Ref) {
 	}
 
 	// get next non zero generation
-	var gen = atomic.AddUint64(&p.generation, 1)
+	var gen = atomic.AddUint64(&p.gen, 1)
 	if gen == 0 {
-		gen = atomic.AddUint64(&p.generation, 1)
+		gen = atomic.AddUint64(&p.gen, 1)
 	}
 
 	// get from pool

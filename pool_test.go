@@ -78,7 +78,7 @@ func TestDoubleRelease(t *testing.T) {
 }
 
 func TestGenerationOverflow(t *testing.T) {
-	globalPool.generation = math.MaxUint64
+	globalPool.gen = math.MaxUint64
 	_, ref := Borrow(123)
 	ref.Release()
 }
