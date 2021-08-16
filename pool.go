@@ -6,8 +6,27 @@ import (
 	"sync/atomic"
 )
 
-var pools []*sync.Pool
-var generation uint64
+var globalPool = NewPool()
+
+// Global returns the global pool.
+func Global() *Pool {
+	return globalPool
+}
+
+// Borrow borrows from the global pool. See Pool.Borrow.
+func Borrow(len int) ([]byte, Ref) {
+	return globalPool.Borrow(len)
+}
+
+// Clone clones using the global pool. See Pool.Clone.
+func Clone(slice []byte) ([]byte, Ref) {
+	return globalPool.Clone(slice)
+}
+
+// Concat clones using the global pool. See Pool.Concat.
+func Concat(slices ...[]byte) ([]byte, Ref) {
+	return globalPool.Concat(slices...)
+}
 
 type buffer struct {
 	gen   uint64
@@ -15,8 +34,16 @@ type buffer struct {
 	slice []byte
 }
 
-func init() {
+// Pool is dynamic slice length pool.
+type Pool struct {
+	generation uint64
+	pools      []*sync.Pool
+}
+
+// NewPool creates and returns a new pool.
+func NewPool() *Pool {
 	// create 16 pools from 1 KB to 32 MB
+	var pools []*sync.Pool
 	for i := 0; i < 16; i++ {
 		num := int8(i)
 		size := 1 << (i + 10)
@@ -29,6 +56,10 @@ func init() {
 			},
 		})
 	}
+
+	return &Pool{
+		pools: pools,
+	}
 }
 
 var zeroRef Ref
@@ -36,8 +67,9 @@ var zeroRef Ref
 // Ref is a reference to a borrowed slice. A zero reference represents a
 // no-op reference.
 type Ref struct {
-	gen uint64
-	buf *buffer
+	pool *Pool
+	gen  uint64
+	buf  *buffer
 }
 
 // Release will release the borrowed slice. The function should be called at
@@ -54,7 +86,7 @@ func (r Ref) Release() {
 	}
 
 	// recycle buffer
-	pools[r.buf.pool].Put(r.buf)
+	r.pool.pools[r.buf.pool].Put(r.buf)
 }
 
 // Borrow will return a slice that has the specified length. If the requested
@@ -66,7 +98,7 @@ func (r Ref) Release() {
 // Note: For values up to 8 bytes (64 bits) the internal Go arena allocator is
 // used by calling make(). From benchmarks this seems to be faster than calling
 // the pool to borrow and return a value.
-func Borrow(len int) ([]byte, Ref) {
+func (p *Pool) Borrow(len int) ([]byte, Ref) {
 	// determine pool
 	pool := bits.Len64(uint64(len)) - 10
 	if pool < 0 {
@@ -81,13 +113,13 @@ func Borrow(len int) ([]byte, Ref) {
 	}
 
 	// get next non zero generation
-	var gen = atomic.AddUint64(&generation, 1)
+	var gen = atomic.AddUint64(&p.generation, 1)
 	if gen == 0 {
-		gen = atomic.AddUint64(&generation, 1)
+		gen = atomic.AddUint64(&p.generation, 1)
 	}
 
 	// get from pool
-	buf := pools[pool].Get().(*buffer)
+	buf := p.pools[pool].Get().(*buffer)
 
 	// set generation
 	buf.gen = gen
@@ -97,17 +129,18 @@ func Borrow(len int) ([]byte, Ref) {
 
 	// prepare ref
 	ref := Ref{
-		gen: gen,
-		buf: buf,
+		pool: p,
+		gen:  gen,
+		buf:  buf,
 	}
 
 	return slice, ref
 }
 
 // Clone will copy the provided slice into a borrowed slice.
-func Clone(slice []byte) ([]byte, Ref) {
+func (p *Pool) Clone(slice []byte) ([]byte, Ref) {
 	// borrow buffer
-	buf, ref := Borrow(len(slice))
+	buf, ref := p.Borrow(len(slice))
 
 	// copy bytes
 	copy(buf, slice)
@@ -116,7 +149,7 @@ func Clone(slice []byte) ([]byte, Ref) {
 }
 
 // Concat will concatenate the provided byte slices using a borrowed slice.
-func Concat(slices ...[]byte) ([]byte, Ref) {
+func (p *Pool) Concat(slices ...[]byte) ([]byte, Ref) {
 	// compute total length
 	var total int
 	for _, s := range slices {
@@ -124,7 +157,7 @@ func Concat(slices ...[]byte) ([]byte, Ref) {
 	}
 
 	// borrow buffer
-	buf, ref := Borrow(total)
+	buf, ref := p.Borrow(total)
 
 	// copy bytes
 	var pos int

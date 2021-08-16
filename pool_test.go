@@ -11,6 +11,10 @@ import (
 
 var classes = []int{2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048}
 
+func TestGlobal(t *testing.T) {
+	assert.NotNil(t, Global())
+}
+
 func TestNoop(t *testing.T) {
 	assert.NotPanics(t, func() {
 		Ref{}.Release()
@@ -74,7 +78,7 @@ func TestDoubleRelease(t *testing.T) {
 }
 
 func TestGenerationOverflow(t *testing.T) {
-	generation = math.MaxUint64
+	globalPool.generation = math.MaxUint64
 	_, ref := Borrow(123)
 	ref.Release()
 }
