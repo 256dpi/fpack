@@ -9,6 +9,57 @@ import (
 	"github.com/tidwall/cast"
 )
 
+var decoderPool = sync.Pool{
+	New: func() interface{} {
+		return NewDecoder(nil)
+	},
+}
+
+// Decode will decode data using the provided decoding function. The function is
+// run once to decode the data. It will return ErrBufferTooShort if the buffer
+// was not long enough to read all data, ErrRemainingBytes if the provided
+// buffers has not been full consumed or any error returned by the callback.
+func Decode(bytes []byte, fn func(dec *Decoder) error) error {
+	// borrow
+	dec := decoderPool.Get().(*Decoder)
+	dec.Reset(bytes)
+
+	// recycle
+	defer func() {
+		dec.Reset(nil)
+		decoderPool.Put(dec)
+	}()
+
+	// decode
+	err := fn(dec)
+	if err != nil {
+		return err
+	}
+
+	// check error
+	err = dec.Error()
+	if err != nil {
+		return err
+	}
+
+	// check length
+	if dec.Length() != 0 {
+		return ErrRemainingBytes
+	}
+
+	return nil
+}
+
+// MustDecode wraps Decode but omits error propagation. It will return false if
+// the buffer was not long enough to read all data or the buffer has not been
+// fully consumed.
+func MustDecode(bytes []byte, fn func(dec *Decoder)) bool {
+	return Decode(bytes, func(dec *Decoder) error {
+		fn(dec)
+		return nil
+	}) == nil
+}
+
 // Decoder manages data decoding.
 type Decoder struct {
 	bo  binary.ByteOrder
@@ -369,55 +420,4 @@ func (d *Decoder) DelBytes(delim []byte, clone bool) []byte {
 // if the source byte slice changes.
 func (d *Decoder) Tail(clone bool) []byte {
 	return d.Bytes(len(d.buf), clone)
-}
-
-var decoderPool = sync.Pool{
-	New: func() interface{} {
-		return NewDecoder(nil)
-	},
-}
-
-// Decode will decode data using the provided decoding function. The function is
-// run once to decode the data. It will return ErrBufferTooShort if the buffer
-// was not long enough to read all data, ErrRemainingBytes if the provided
-// buffers has not been full consumed or any error returned by the callback.
-func Decode(bytes []byte, fn func(dec *Decoder) error) error {
-	// borrow
-	dec := decoderPool.Get().(*Decoder)
-	dec.Reset(bytes)
-
-	// recycle
-	defer func() {
-		dec.Reset(nil)
-		decoderPool.Put(dec)
-	}()
-
-	// decode
-	err := fn(dec)
-	if err != nil {
-		return err
-	}
-
-	// check error
-	err = dec.Error()
-	if err != nil {
-		return err
-	}
-
-	// check length
-	if dec.Length() != 0 {
-		return ErrRemainingBytes
-	}
-
-	return nil
-}
-
-// MustDecode wraps Decode but omits error propagation. It will return false if
-// the buffer was not long enough to read all data or the buffer has not been
-// fully consumed.
-func MustDecode(bytes []byte, fn func(dec *Decoder)) bool {
-	return Decode(bytes, func(dec *Decoder) error {
-		fn(dec)
-		return nil
-	}) == nil
 }
