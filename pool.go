@@ -6,26 +6,11 @@ import (
 	"sync/atomic"
 )
 
-var globalPool = NewPool()
+var global = NewPool()
 
 // Global returns the global pool.
 func Global() *Pool {
-	return globalPool
-}
-
-// Borrow borrows from the global pool. See Pool.Borrow.
-func Borrow(len int) ([]byte, Ref) {
-	return globalPool.Borrow(len)
-}
-
-// Clone clones using the global pool. See Pool.Clone.
-func Clone(slice []byte) ([]byte, Ref) {
-	return globalPool.Clone(slice)
-}
-
-// Concat clones using the global pool. See Pool.Concat.
-func Concat(slices ...[]byte) ([]byte, Ref) {
-	return globalPool.Concat(slices...)
+	return global
 }
 
 type buffer struct {
