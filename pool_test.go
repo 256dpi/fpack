@@ -27,13 +27,14 @@ func TestBorrow(t *testing.T) {
 	assert.Equal(t, 1024, cap(buf))
 	ref.Release()
 
-	assert.Equal(t, 2.0, testing.AllocsPerRun(100, func() {
-		Borrow(123)
-	}))
-
 	assert.Equal(t, 0.0, testing.AllocsPerRun(100, func() {
 		_, ref := Borrow(123)
 		ref.Release()
+	}))
+
+	pool := NewPool()
+	assert.Equal(t, 2.0, testing.AllocsPerRun(100, func() {
+		pool.Borrow(123)
 	}))
 }
 
@@ -102,6 +103,9 @@ func TestConcat(t *testing.T) {
 }
 
 func BenchmarkPool(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		_, ref := Borrow(123)
 		ref.Release()
