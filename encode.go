@@ -93,7 +93,7 @@ func encode(pool *Pool, buf []byte, withBuf bool, fn func(enc *Encoder) error) (
 	var ref Ref
 	if !withBuf {
 		if pool != nil {
-			buf, ref = pool.Borrow(length)
+			buf, ref = pool.Borrow(length, false)
 			buf = buf[:enc.len]
 		} else {
 			buf = make([]byte, length)

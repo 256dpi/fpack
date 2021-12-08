@@ -75,15 +75,16 @@ func (r Ref) Release() {
 }
 
 // Borrow will return a slice that has the specified length. If the requested
-// length is too small or too long a slice will be allocated. To recycle the
+// length is too small or too big, a slice will be allocated. To recycle the
 // slice, it must be released by calling Release() on the returned Ref value.
 // Always release any returned value, even if the slice grows, it is possible
-// to at least return the originally requested slice.
+// to at least return the originally requested slice. If zero is true, the
+// returned slice will be zeroed (but not the full underlying buffer).
 //
 // Note: For values up to 8 bytes (64 bits) the internal Go arena allocator is
 // used by calling make(). From benchmarks this seems to be faster than calling
 // the pool to borrow and return a value.
-func (p *Pool) Borrow(len int) ([]byte, Ref) {
+func (p *Pool) Borrow(len int, zero bool) ([]byte, Ref) {
 	// determine pool
 	pool := bits.Len64(uint64(len)) - 10
 	if pool < 0 {
@@ -112,6 +113,13 @@ func (p *Pool) Borrow(len int) ([]byte, Ref) {
 	// prepare slice
 	slice := buf.slice[0:len]
 
+	// zero slice if requested
+	if zero {
+		for i := range slice {
+			slice[i] = 0
+		}
+	}
+
 	// prepare ref
 	ref := Ref{
 		pool: p,
@@ -125,7 +133,7 @@ func (p *Pool) Borrow(len int) ([]byte, Ref) {
 // Clone will copy the provided slice into a borrowed slice.
 func (p *Pool) Clone(slice []byte) ([]byte, Ref) {
 	// borrow buffer
-	buf, ref := p.Borrow(len(slice))
+	buf, ref := p.Borrow(len(slice), false)
 
 	// copy bytes
 	copy(buf, slice)
@@ -142,7 +150,7 @@ func (p *Pool) Concat(slices ...[]byte) ([]byte, Ref) {
 	}
 
 	// borrow buffer
-	buf, ref := p.Borrow(total)
+	buf, ref := p.Borrow(total, false)
 
 	// copy bytes
 	var pos int

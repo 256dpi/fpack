@@ -15,13 +15,13 @@ func TestArena(t *testing.T) {
 		Size: 64,
 	}
 
-	buf1 := arena.Get(0)
+	buf1 := arena.Get(0, false)
 	assert.Len(t, buf1, 0)
 
-	buf2 := arena.Get(42)
+	buf2 := arena.Get(42, false)
 	assert.Len(t, buf2, 42)
 
-	buf3 := arena.Get(42)
+	buf3 := arena.Get(42, false)
 	assert.Len(t, buf3, 42)
 
 	for i := range buf2 {
@@ -42,7 +42,7 @@ func TestArena(t *testing.T) {
 			Pool: Global(),
 			Size: 64,
 		}
-		arena.Get(32)
+		arena.Get(32, false)
 		arena.Release()
 	}))
 }
@@ -57,7 +57,7 @@ func BenchmarkArena(b *testing.B) {
 			Pool: Global(),
 			Size: 64,
 		}
-		arena.Get(32)
+		arena.Get(32, false)
 		arena.Release()
 	}
 }

@@ -12,7 +12,7 @@ type Arena struct {
 }
 
 // Get will return a buffer of the provided length.
-func (a *Arena) Get(length int) []byte {
+func (a *Arena) Get(length int, zero bool) []byte {
 	// check refs
 	if a.refs == nil {
 		a.refs = a._refs[:0]
@@ -22,14 +22,14 @@ func (a *Arena) Get(length int) []byte {
 	if length == 0 {
 		return []byte{}
 	} else if length > a.Size {
-		buf, ref := a.Pool.Borrow(length)
+		buf, ref := a.Pool.Borrow(length, zero)
 		a.refs = append(a.refs, ref)
 		return buf
 	}
 
 	// ensure buf
 	if a.buf == nil || len(a.buf) < length {
-		buf, ref := a.Pool.Borrow(a.Size)
+		buf, ref := a.Pool.Borrow(a.Size, zero)
 		a.buf = buf
 		a.refs = append(a.refs, ref)
 	}
@@ -44,7 +44,7 @@ func (a *Arena) Get(length int) []byte {
 // Clone will return a copy of the provided buffer.
 func (a *Arena) Clone(buf []byte) []byte {
 	// clone buffer
-	clone := a.Get(len(buf))
+	clone := a.Get(len(buf), false)
 	copy(clone, buf)
 
 	return clone
