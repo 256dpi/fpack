@@ -53,6 +53,7 @@ func Decode(bytes []byte, fn func(dec *Decoder) error) error {
 // Decoder manages data decoding.
 type Decoder struct {
 	bo  binary.ByteOrder
+	arn *Arena
 	buf []byte
 	err error
 }
@@ -68,6 +69,7 @@ func NewDecoder(buf []byte) *Decoder {
 // Reset will reset the decoder.
 func (d *Decoder) Reset(buf []byte) {
 	d.bo = binary.BigEndian
+	d.arn = nil
 	d.buf = buf
 	d.err = nil
 }
@@ -75,6 +77,11 @@ func (d *Decoder) Reset(buf []byte) {
 // UseLittleEndian will set the used binary byte order to little endian.
 func (d *Decoder) UseLittleEndian() {
 	d.bo = binary.LittleEndian
+}
+
+// UseArena will use the specified arena for string and bytes cloning.
+func (d *Decoder) UseArena(arena *Arena) {
+	d.arn = arena
 }
 
 // Length returns the remaining length of the buffer.
@@ -291,12 +298,17 @@ func (d *Decoder) String(length int, clone bool) string {
 	// cast or set string
 	var str string
 	if clone {
-		str = string(d.buf[:length])
-		d.buf = d.buf[length:]
+		if d.arn != nil {
+			str = cast.ToString(d.arn.Clone(d.buf[:length]))
+		} else {
+			str = string(d.buf[:length])
+		}
 	} else {
 		str = cast.ToString(d.buf[:length])
-		d.buf = d.buf[length:]
 	}
+
+	// resize
+	d.buf = d.buf[length:]
 
 	return str
 }
@@ -318,13 +330,18 @@ func (d *Decoder) Bytes(length int, clone bool) []byte {
 	// clone or set bytes
 	var buf []byte
 	if clone {
-		buf = make([]byte, length)
-		copy(buf, d.buf[:length])
-		d.buf = d.buf[length:]
+		if d.arn != nil {
+			buf = d.arn.Clone(d.buf[:length])
+		} else {
+			buf = make([]byte, length)
+			copy(buf, d.buf[:length])
+		}
 	} else {
 		buf = d.buf[:length]
-		d.buf = d.buf[length:]
 	}
+
+	// resize
+	d.buf = d.buf[length:]
 
 	return buf
 }

@@ -336,6 +336,36 @@ func TestDecodeByteOrder(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestDecodeArena(t *testing.T) {
+	arena := Arena{
+		Pool: Global(),
+		Size: 105 * 10,
+	}
+	defer arena.Release()
+
+	sample := make([]byte, 10)
+
+	err := Decode(sample, func(dec *Decoder) error {
+		dec.UseArena(&arena)
+		dec.String(5, true)
+		dec.Bytes(5, true)
+		return nil
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, 10, arena.Length())
+
+	assert.Equal(t, 0.0, testing.AllocsPerRun(100, func() {
+		err := Decode(sample, func(dec *Decoder) error {
+			dec.UseArena(&arena)
+			dec.String(5, true)
+			dec.Bytes(5, true)
+			return nil
+		})
+		assert.NoError(t, err)
+	}))
+	assert.Equal(t, 1020, arena.Length())
+}
+
 func BenchmarkDecode(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
