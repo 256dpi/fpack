@@ -13,7 +13,7 @@ type Arena struct {
 
 // Get will return a buffer of the provided length.
 func (a *Arena) Get(length int, zero bool) []byte {
-	// check refs
+	// ensure refs
 	if a.refs == nil {
 		a.refs = a._refs[:0]
 	}
@@ -29,7 +29,7 @@ func (a *Arena) Get(length int, zero bool) []byte {
 
 	// ensure buf
 	if a.buf == nil || len(a.buf) < length {
-		buf, ref := a.Pool.Borrow(a.Size, zero)
+		buf, ref := a.Pool.Borrow(a.Size, false)
 		a.buf = buf
 		a.refs = append(a.refs, ref)
 	}
@@ -37,6 +37,13 @@ func (a *Arena) Get(length int, zero bool) []byte {
 	// get fragment
 	frag := a.buf[:length]
 	a.buf = a.buf[length:]
+
+	// zero fragment if requested
+	if zero {
+		for i := range frag {
+			frag[i] = 0
+		}
+	}
 
 	return frag
 }
