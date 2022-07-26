@@ -233,6 +233,14 @@ func TestEncodeErrors(t *testing.T) {
 			})
 			assert.Equal(t, io.EOF, err)
 		}
+
+		_, _, err = Encode(pool, func(enc *Encoder) error {
+			if !enc.Counting() {
+				enc.err = io.EOF
+			}
+			return nil
+		})
+		assert.Equal(t, io.EOF, err)
 	})
 }
 
