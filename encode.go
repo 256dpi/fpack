@@ -260,7 +260,7 @@ func (e *Encoder) Int(n int64, size int) {
 		return
 	}
 
-	// check overflow
+	// check overflow and size
 	var overflow bool
 	switch size {
 	case 1:
@@ -269,9 +269,14 @@ func (e *Encoder) Int(n int64, size int) {
 		overflow = n < math.MinInt16 || n > math.MaxInt16
 	case 4:
 		overflow = n < math.MinInt32 || n > math.MaxInt32
+	case 8:
+	default:
+		e.err = ErrInvalidSize
+		return
 	}
 	if overflow {
 		e.err = ErrNumberOverflow
+		return
 	}
 
 	// convert
@@ -326,7 +331,7 @@ func (e *Encoder) Uint(num uint64, size int) {
 		return
 	}
 
-	// check overflow
+	// check overflow and size
 	var overflow bool
 	switch size {
 	case 1:
@@ -335,9 +340,14 @@ func (e *Encoder) Uint(num uint64, size int) {
 		overflow = num > math.MaxUint16
 	case 4:
 		overflow = num > math.MaxUint32
+	case 8:
+	default:
+		e.err = ErrInvalidSize
+		return
 	}
 	if overflow {
 		e.err = ErrNumberOverflow
+		return
 	}
 
 	// handle length
@@ -470,12 +480,36 @@ func (e *Encoder) VarBytes(buf []byte) {
 
 // DelString writes a suffix delimited string.
 func (e *Encoder) DelString(str, delim string) {
+	// skip if errored
+	if e.err != nil {
+		return
+	}
+
+	// check delimiter
+	if len(delim) == 0 {
+		e.err = ErrEmptyDelimiter
+		return
+	}
+
+	// encode
 	e.String(str)
 	e.String(delim)
 }
 
 // DelBytes writes a suffix delimited byte slice.
 func (e *Encoder) DelBytes(buf, delim []byte) {
+	// skip if errored
+	if e.err != nil {
+		return
+	}
+
+	// check delimiter
+	if len(delim) == 0 {
+		e.err = ErrEmptyDelimiter
+		return
+	}
+
+	// encode
 	e.Bytes(buf)
 	e.Bytes(delim)
 }

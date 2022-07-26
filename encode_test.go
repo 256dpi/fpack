@@ -274,6 +274,34 @@ func TestEncodeNumberOverflow(t *testing.T) {
 	}
 }
 
+func TestEncodeInvalidSize(t *testing.T) {
+	_, _, err := MustEncode(nil, func(enc *Encoder) {
+		enc.Int(0, 3)
+	})
+	assert.Error(t, err)
+	assert.Equal(t, ErrInvalidSize, err)
+
+	_, _, err = MustEncode(nil, func(enc *Encoder) {
+		enc.Uint(0, 3)
+	})
+	assert.Error(t, err)
+	assert.Equal(t, ErrInvalidSize, err)
+}
+
+func TestEncodeEmptyDelimiter(t *testing.T) {
+	_, _, err := MustEncode(nil, func(enc *Encoder) {
+		enc.DelString("", "")
+	})
+	assert.Error(t, err)
+	assert.Equal(t, ErrEmptyDelimiter, err)
+
+	_, _, err = MustEncode(nil, func(enc *Encoder) {
+		enc.DelBytes(nil, nil)
+	})
+	assert.Error(t, err)
+	assert.Equal(t, ErrEmptyDelimiter, err)
+}
+
 func TestEncodeAllocation(t *testing.T) {
 	withAndWithoutPool(func(pool *Pool) {
 		allocs := 0.0
