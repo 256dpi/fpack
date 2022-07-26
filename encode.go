@@ -260,6 +260,20 @@ func (e *Encoder) Int(n int64, size int) {
 		return
 	}
 
+	// check overflow
+	var overflow bool
+	switch size {
+	case 1:
+		overflow = n < math.MinInt8 || n > math.MaxInt8
+	case 2:
+		overflow = n < math.MinInt16 || n > math.MaxInt16
+	case 4:
+		overflow = n < math.MinInt32 || n > math.MaxInt32
+	}
+	if overflow {
+		e.err = ErrNumberOverflow
+	}
+
 	// convert
 	un := uint64(n)
 
@@ -310,6 +324,20 @@ func (e *Encoder) Uint(num uint64, size int) {
 	// skip if errored
 	if e.err != nil {
 		return
+	}
+
+	// check overflow
+	var overflow bool
+	switch size {
+	case 1:
+		overflow = num > math.MaxUint8
+	case 2:
+		overflow = num > math.MaxUint16
+	case 4:
+		overflow = num > math.MaxUint32
+	}
+	if overflow {
+		e.err = ErrNumberOverflow
 	}
 
 	// handle length

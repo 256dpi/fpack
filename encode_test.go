@@ -236,6 +236,44 @@ func TestEncodeErrors(t *testing.T) {
 	})
 }
 
+func TestEncodeNumberOverflow(t *testing.T) {
+	table := []func(*Encoder){
+		func(enc *Encoder) {
+			enc.Int(math.MinInt8-1, 1)
+		},
+		func(enc *Encoder) {
+			enc.Int(math.MaxInt8+1, 1)
+		},
+		func(enc *Encoder) {
+			enc.Int(math.MinInt16-1, 2)
+		},
+		func(enc *Encoder) {
+			enc.Int(math.MaxInt16+1, 2)
+		},
+		func(enc *Encoder) {
+			enc.Int(math.MinInt32-1, 4)
+		},
+		func(enc *Encoder) {
+			enc.Int(math.MaxInt32+1, 4)
+		},
+		func(enc *Encoder) {
+			enc.Uint(math.MaxUint8+1, 1)
+		},
+		func(enc *Encoder) {
+			enc.Uint(math.MaxUint16+1, 2)
+		},
+		func(enc *Encoder) {
+			enc.Uint(math.MaxUint32+1, 4)
+		},
+	}
+
+	for i, item := range table {
+		_, _, err := MustEncode(nil, item)
+		assert.Error(t, err, i)
+		assert.Equal(t, ErrNumberOverflow, err)
+	}
+}
+
 func TestEncodeAllocation(t *testing.T) {
 	withAndWithoutPool(func(pool *Pool) {
 		allocs := 0.0
