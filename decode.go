@@ -168,6 +168,9 @@ func (d *Decoder) Int(size int) int64 {
 		i = int64(int32(d.bo.Uint32(d.buf)))
 	case 8:
 		i = int64(d.bo.Uint64(d.buf))
+	default:
+		d.err = ErrInvalidSize
+		return 0
 	}
 
 	// slice
@@ -220,6 +223,9 @@ func (d *Decoder) Uint(size int) uint64 {
 		u = uint64(d.bo.Uint32(d.buf))
 	case 8:
 		u = d.bo.Uint64(d.buf)
+	default:
+		d.err = ErrInvalidSize
+		return 0
 	}
 
 	// slice

@@ -9,3 +9,6 @@ var ErrBufferTooShort = errors.New("buffer too short")
 
 // ErrRemainingBytes is returned if the provided buffer is not fully consumed.
 var ErrRemainingBytes = errors.New("remaining bytes")
+
+// ErrInvalidSize is returned if a provided number size is invalid.
+var ErrInvalidSize = errors.New("invalid size")

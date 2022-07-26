@@ -243,6 +243,22 @@ func TestDecodeShortBuffer(t *testing.T) {
 	}
 }
 
+func TestDecodeInvalidSize(t *testing.T) {
+	err := Decode(make([]byte, 8), func(dec *Decoder) error {
+		dec.Int(3)
+		return nil
+	})
+	assert.Error(t, err)
+	assert.Equal(t, ErrInvalidSize, err)
+
+	err = Decode(make([]byte, 8), func(dec *Decoder) error {
+		dec.Uint(3)
+		return nil
+	})
+	assert.Error(t, err)
+	assert.Equal(t, ErrInvalidSize, err)
+}
+
 func TestDecodeRemainingBytes(t *testing.T) {
 	err := Decode([]byte{42, 84}, func(dec *Decoder) error {
 		dec.Uint8()
