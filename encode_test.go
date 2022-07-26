@@ -49,12 +49,60 @@ func TestMeasure(t *testing.T) {
 	assert.Equal(t, len(dummy), length)
 }
 
-func TestEncoderError(t *testing.T) {
+func TestMeasureErrors(t *testing.T) {
 	length, err := Measure(func(enc *Encoder) error {
 		return io.EOF
 	})
 	assert.Equal(t, io.EOF, err)
 	assert.Zero(t, length)
+
+	table := []func(*Encoder){
+		func(enc *Encoder) {
+			enc.Skip(0)
+		},
+		func(enc *Encoder) {
+			enc.Int(0, 0)
+		},
+		func(enc *Encoder) {
+			enc.Uint(0, 0)
+		},
+		func(enc *Encoder) {
+			enc.VarInt(0)
+		},
+		func(enc *Encoder) {
+			enc.VarUint(0)
+		},
+		func(enc *Encoder) {
+			enc.FixString("", 0)
+		},
+		func(enc *Encoder) {
+			enc.FixBytes(nil, 0)
+		},
+		func(enc *Encoder) {
+			enc.VarString("")
+		},
+		func(enc *Encoder) {
+			enc.VarBytes(nil)
+		},
+		func(enc *Encoder) {
+			enc.DelString("", "")
+		},
+		func(enc *Encoder) {
+			enc.DelBytes(nil, nil)
+		},
+		func(enc *Encoder) {
+			enc.Tail(nil)
+		},
+	}
+
+	for _, item := range table {
+		_, err := Measure(func(enc *Encoder) error {
+			enc.err = io.EOF
+			item(enc)
+			return nil
+		})
+		assert.Equal(t, io.EOF, err)
+	}
 }
 
 func TestMustMeasure(t *testing.T) {
@@ -71,6 +119,52 @@ func TestEncode(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, dummy, res)
 	})
+}
+
+func TestEncodeNumbers(t *testing.T) {
+	table := []func(*Encoder){
+		func(enc *Encoder) {
+			enc.Int(math.MinInt8, 1)
+		},
+		func(enc *Encoder) {
+			enc.Int(math.MaxInt8, 1)
+		},
+		func(enc *Encoder) {
+			enc.Int(math.MinInt16, 2)
+		},
+		func(enc *Encoder) {
+			enc.Int(math.MaxInt16, 2)
+		},
+		func(enc *Encoder) {
+			enc.Int(math.MinInt32, 4)
+		},
+		func(enc *Encoder) {
+			enc.Int(math.MaxInt32, 4)
+		},
+		func(enc *Encoder) {
+			enc.Int(math.MinInt64, 8)
+		},
+		func(enc *Encoder) {
+			enc.Int(math.MaxInt64, 8)
+		},
+		func(enc *Encoder) {
+			enc.Uint(math.MaxUint8, 1)
+		},
+		func(enc *Encoder) {
+			enc.Uint(math.MaxUint16, 2)
+		},
+		func(enc *Encoder) {
+			enc.Uint(math.MaxUint32, 4)
+		},
+		func(enc *Encoder) {
+			enc.Uint(math.MaxUint64, 8)
+		},
+	}
+
+	for _, item := range table {
+		_, _, err := MustEncode(nil, item)
+		assert.NoError(t, err)
+	}
 }
 
 func TestEncodeErrors(t *testing.T) {
@@ -91,6 +185,54 @@ func TestEncodeErrors(t *testing.T) {
 		assert.Equal(t, io.EOF, err)
 		assert.Empty(t, data)
 		assert.Zero(t, ref)
+
+		table := []func(*Encoder){
+			func(enc *Encoder) {
+				enc.Skip(0)
+			},
+			func(enc *Encoder) {
+				enc.Int(0, 0)
+			},
+			func(enc *Encoder) {
+				enc.Uint(0, 0)
+			},
+			func(enc *Encoder) {
+				enc.VarInt(0)
+			},
+			func(enc *Encoder) {
+				enc.VarUint(0)
+			},
+			func(enc *Encoder) {
+				enc.FixString("", 0)
+			},
+			func(enc *Encoder) {
+				enc.FixBytes(nil, 0)
+			},
+			func(enc *Encoder) {
+				enc.VarString("")
+			},
+			func(enc *Encoder) {
+				enc.VarBytes(nil)
+			},
+			func(enc *Encoder) {
+				enc.DelString("", "")
+			},
+			func(enc *Encoder) {
+				enc.DelBytes(nil, nil)
+			},
+			func(enc *Encoder) {
+				enc.Tail(nil)
+			},
+		}
+
+		for _, item := range table {
+			_, _, err := Encode(pool, func(enc *Encoder) error {
+				enc.err = io.EOF
+				item(enc)
+				return nil
+			})
+			assert.Equal(t, io.EOF, err)
+		}
 	})
 }
 
@@ -111,9 +253,10 @@ func TestEncodeAllocation(t *testing.T) {
 }
 
 func TestMustEncode(t *testing.T) {
-	data, ref := MustEncode(nil, func(enc *Encoder) {
+	data, ref, err := MustEncode(nil, func(enc *Encoder) {
 		enc.VarUint(42)
 	})
+	assert.NoError(t, err)
 	assert.Equal(t, "*", string(data))
 	ref.Release()
 }
@@ -149,39 +292,45 @@ func TestMustEncodeInto(t *testing.T) {
 }
 
 func TestEncodeByteOrder(t *testing.T) {
-	buf, _ := MustEncode(nil, func(enc *Encoder) {
+	buf, _, err := MustEncode(nil, func(enc *Encoder) {
 		enc.Uint16(42)
 	})
+	assert.NoError(t, err)
 	assert.Equal(t, "\x00*", string(buf))
 
-	buf, _ = MustEncode(nil, func(enc *Encoder) {
+	buf, _, err = MustEncode(nil, func(enc *Encoder) {
 		enc.UseLittleEndian()
 		enc.Uint16(42)
 	})
+	assert.NoError(t, err)
 	assert.Equal(t, "*\x00", string(buf))
 }
 
 func TestEncodeByteOrderNegative(t *testing.T) {
-	buf, _ := MustEncode(nil, func(enc *Encoder) {
+	buf, _, err := MustEncode(nil, func(enc *Encoder) {
 		enc.Int16(42)
 	})
+	assert.NoError(t, err)
 	assert.Equal(t, "\x00*", string(buf))
 
-	buf, _ = MustEncode(nil, func(enc *Encoder) {
+	buf, _, err = MustEncode(nil, func(enc *Encoder) {
 		enc.UseLittleEndian()
 		enc.Int16(42)
 	})
+	assert.NoError(t, err)
 	assert.Equal(t, "*\x00", string(buf))
 
-	buf, _ = MustEncode(nil, func(enc *Encoder) {
+	buf, _, err = MustEncode(nil, func(enc *Encoder) {
 		enc.Int16(-42)
 	})
+	assert.NoError(t, err)
 	assert.Equal(t, "\xFF\xD6", string(buf))
 
-	buf, _ = MustEncode(nil, func(enc *Encoder) {
+	buf, _, err = MustEncode(nil, func(enc *Encoder) {
 		enc.UseLittleEndian()
 		enc.Int16(-42)
 	})
+	assert.NoError(t, err)
 	assert.Equal(t, "\xD6\xFF", string(buf))
 }
 

@@ -30,6 +30,12 @@ func Measure(fn func(enc *Encoder) error) (int, error) {
 		return 0, err
 	}
 
+	// check error
+	err = enc.Error()
+	if err != nil {
+		return 0, err
+	}
+
 	// get length
 	length := enc.Length()
 
@@ -81,6 +87,12 @@ func encode(pool *Pool, buf []byte, withBuf bool, fn func(enc *Encoder) error) (
 		return nil, 0, Ref{}, err
 	}
 
+	// check error
+	err = enc.Error()
+	if err != nil {
+		return nil, 0, Ref{}, err
+	}
+
 	// get length
 	length := enc.Length()
 
@@ -110,18 +122,28 @@ func encode(pool *Pool, buf []byte, withBuf bool, fn func(enc *Encoder) error) (
 		return nil, 0, Ref{}, err
 	}
 
+	// check error
+	err = enc.Error()
+	if err != nil {
+		ref.Release()
+		return nil, 0, Ref{}, err
+	}
+
 	return buf, length, ref, nil
 }
 
 // MustEncode wraps Encode but omits the error propagation.
-func MustEncode(pool *Pool, fn func(enc *Encoder)) ([]byte, Ref) {
+func MustEncode(pool *Pool, fn func(enc *Encoder)) ([]byte, Ref, error) {
 	// encode without error
-	data, ref, _ := Encode(pool, func(enc *Encoder) error {
+	data, ref, err := Encode(pool, func(enc *Encoder) error {
 		fn(enc)
 		return nil
 	})
+	if err != nil {
+		return nil, Ref{}, err
+	}
 
-	return data, ref
+	return data, ref, nil
 }
 
 // MustEncodeInto wraps EncodeInto but omits the error propagation. It will
@@ -142,6 +164,7 @@ type Encoder struct {
 	b10 [10]byte
 	len int
 	buf []byte
+	err error
 }
 
 // NewEncoder will return an encoder.
@@ -156,6 +179,7 @@ func (e *Encoder) Reset(buf []byte) {
 	e.bo = binary.BigEndian
 	e.len = 0
 	e.buf = buf
+	e.err = nil
 }
 
 // UseLittleEndian will set the used binary byte order to little endian.
@@ -173,8 +197,18 @@ func (e *Encoder) Length() int {
 	return e.len
 }
 
+// Error will return the current error.
+func (e *Encoder) Error() error {
+	return e.err
+}
+
 // Skip the specified amount of bytes.
 func (e *Encoder) Skip(num int) {
+	// skip if errored
+	if e.err != nil {
+		return
+	}
+
 	// handle length
 	if e.buf == nil {
 		e.len += num
@@ -221,6 +255,11 @@ func (e *Encoder) Int64(num int64) {
 
 // Int writes a one, two, four or eight byte signed integer (two's complement).
 func (e *Encoder) Int(n int64, size int) {
+	// skip if errored
+	if e.err != nil {
+		return
+	}
+
 	// convert
 	un := uint64(n)
 
@@ -268,6 +307,11 @@ func (e *Encoder) Uint64(num uint64) {
 
 // Uint writes a one, two, four or eight byte unsigned integer.
 func (e *Encoder) Uint(num uint64, size int) {
+	// skip if errored
+	if e.err != nil {
+		return
+	}
+
 	// handle length
 	if e.buf == nil {
 		e.len += size
@@ -302,6 +346,11 @@ func (e *Encoder) Float64(num float64) {
 
 // VarInt writes a variable signed integer.
 func (e *Encoder) VarInt(num int64) {
+	// skip if errored
+	if e.err != nil {
+		return
+	}
+
 	// handle length
 	if e.buf == nil {
 		e.len += binary.PutVarint(e.b10[:], num)
@@ -315,6 +364,11 @@ func (e *Encoder) VarInt(num int64) {
 
 // VarUint writes a variable unsigned integer.
 func (e *Encoder) VarUint(num uint64) {
+	// skip if errored
+	if e.err != nil {
+		return
+	}
+
 	// handle length
 	if e.buf == nil {
 		e.len += binary.PutUvarint(e.b10[:], num)
@@ -328,6 +382,11 @@ func (e *Encoder) VarUint(num uint64) {
 
 // String writes a raw string.
 func (e *Encoder) String(str string) {
+	// skip if errored
+	if e.err != nil {
+		return
+	}
+
 	// handle length
 	if e.buf == nil {
 		e.len += len(str)
@@ -341,6 +400,11 @@ func (e *Encoder) String(str string) {
 
 // Bytes writes a raw byte slice.
 func (e *Encoder) Bytes(buf []byte) {
+	// skip if errored
+	if e.err != nil {
+		return
+	}
+
 	// handle length
 	if e.buf == nil {
 		e.len += len(buf)
@@ -390,6 +454,11 @@ func (e *Encoder) DelBytes(buf, delim []byte) {
 
 // Tail writes a tail byte slice.
 func (e *Encoder) Tail(buf []byte) {
+	// skip if errored
+	if e.err != nil {
+		return
+	}
+
 	// handle length
 	if e.buf == nil {
 		e.len += len(buf)
