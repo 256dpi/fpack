@@ -1,15 +1,23 @@
 package fpack
 
 // Arena is a basic arena allocator that allocates fixed size buffers to provide
-// memory for many small buffers. The memory must be returned all at once when
-// no longer needed.
+// memory for many small buffers.
 type Arena struct {
-	Pool  *Pool
-	Size  int
+	pool  *Pool
+	size  int
 	len   int
 	buf   []byte
 	refs  []Ref
 	_refs [128]Ref
+}
+
+// NewArena creates and returns a new arena using the specified pool and buffer
+// size.
+func NewArena(pool *Pool, size int) *Arena {
+	return &Arena{
+		pool: pool,
+		size: size,
+	}
 }
 
 // Length returns the total length of the arena.
@@ -30,15 +38,15 @@ func (a *Arena) Get(length int, zero bool) []byte {
 	// check size
 	if length == 0 {
 		return []byte{}
-	} else if length > a.Size {
-		buf, ref := a.Pool.Borrow(length, zero)
+	} else if length > a.size {
+		buf, ref := a.pool.Borrow(length, zero)
 		a.refs = append(a.refs, ref)
 		return buf
 	}
 
 	// ensure buf
 	if a.buf == nil || len(a.buf) < length {
-		buf, ref := a.Pool.Borrow(a.Size, false)
+		buf, ref := a.pool.Borrow(a.size, false)
 		a.buf = buf
 		a.refs = append(a.refs, ref)
 	}

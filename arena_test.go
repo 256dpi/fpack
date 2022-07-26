@@ -10,10 +10,7 @@ import (
 var sample = bytes.Repeat([]byte{'x'}, 128)
 
 func TestArena(t *testing.T) {
-	arena := Arena{
-		Pool: Global(),
-		Size: 64,
-	}
+	arena := NewArena(Global(), 64)
 
 	buf1 := arena.Get(0, false)
 	assert.Len(t, buf1, 0)
@@ -41,11 +38,8 @@ func TestArena(t *testing.T) {
 		arena.Release()
 	})
 
-	assert.Equal(t, 0.0, testing.AllocsPerRun(100, func() {
-		arena = Arena{
-			Pool: Global(),
-			Size: 64,
-		}
+	assert.Equal(t, 1.0, testing.AllocsPerRun(100, func() {
+		arena = NewArena(Global(), 64)
 		arena.Get(32, false)
 		arena.Release()
 	}))
@@ -54,13 +48,8 @@ func TestArena(t *testing.T) {
 func BenchmarkArena(b *testing.B) {
 	b.ReportAllocs()
 
-	var arena Arena
-
 	for i := 0; i < b.N; i++ {
-		arena = Arena{
-			Pool: Global(),
-			Size: 64,
-		}
+		arena := NewArena(Global(), 64)
 		arena.Get(32, false)
 		arena.Release()
 	}
