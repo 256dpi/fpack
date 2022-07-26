@@ -96,12 +96,13 @@ func TestMeasureErrors(t *testing.T) {
 	}
 
 	for _, item := range table {
-		_, err := Measure(func(enc *Encoder) error {
+		n, err := Measure(func(enc *Encoder) error {
 			enc.err = io.EOF
 			item(enc)
 			return nil
 		})
 		assert.Equal(t, io.EOF, err)
+		assert.Zero(t, n)
 	}
 }
 
@@ -162,8 +163,9 @@ func TestEncodeNumbers(t *testing.T) {
 	}
 
 	for _, item := range table {
-		_, _, err := MustEncode(nil, item)
+		data, _, err := MustEncode(nil, item)
 		assert.NoError(t, err)
+		assert.NotEmpty(t, data)
 	}
 }
 
@@ -226,21 +228,25 @@ func TestEncodeErrors(t *testing.T) {
 		}
 
 		for _, item := range table {
-			_, _, err := Encode(pool, func(enc *Encoder) error {
+			data, ref, err := Encode(pool, func(enc *Encoder) error {
 				enc.err = io.EOF
 				item(enc)
 				return nil
 			})
 			assert.Equal(t, io.EOF, err)
+			assert.Empty(t, data)
+			assert.Zero(t, ref)
 		}
 
-		_, _, err = Encode(pool, func(enc *Encoder) error {
+		data, ref, err = Encode(pool, func(enc *Encoder) error {
 			if !enc.Counting() {
 				enc.err = io.EOF
 			}
 			return nil
 		})
 		assert.Equal(t, io.EOF, err)
+		assert.Empty(t, data)
+		assert.Zero(t, ref)
 	})
 }
 
@@ -276,37 +282,47 @@ func TestEncodeNumberOverflow(t *testing.T) {
 	}
 
 	for i, item := range table {
-		_, _, err := MustEncode(nil, item)
+		data, ref, err := MustEncode(nil, item)
 		assert.Error(t, err, i)
 		assert.Equal(t, ErrNumberOverflow, err)
+		assert.Empty(t, data)
+		assert.Zero(t, ref)
 	}
 }
 
 func TestEncodeInvalidSize(t *testing.T) {
-	_, _, err := MustEncode(nil, func(enc *Encoder) {
+	data, ref, err := MustEncode(nil, func(enc *Encoder) {
 		enc.Int(0, 3)
 	})
 	assert.Error(t, err)
+	assert.Empty(t, data)
+	assert.Zero(t, ref)
 	assert.Equal(t, ErrInvalidSize, err)
 
-	_, _, err = MustEncode(nil, func(enc *Encoder) {
+	data, ref, err = MustEncode(nil, func(enc *Encoder) {
 		enc.Uint(0, 3)
 	})
 	assert.Error(t, err)
+	assert.Empty(t, data)
+	assert.Zero(t, ref)
 	assert.Equal(t, ErrInvalidSize, err)
 }
 
 func TestEncodeEmptyDelimiter(t *testing.T) {
-	_, _, err := MustEncode(nil, func(enc *Encoder) {
+	data, ref, err := MustEncode(nil, func(enc *Encoder) {
 		enc.DelString("", "")
 	})
 	assert.Error(t, err)
+	assert.Empty(t, data)
+	assert.Zero(t, ref)
 	assert.Equal(t, ErrEmptyDelimiter, err)
 
-	_, _, err = MustEncode(nil, func(enc *Encoder) {
+	data, ref, err = MustEncode(nil, func(enc *Encoder) {
 		enc.DelBytes(nil, nil)
 	})
 	assert.Error(t, err)
+	assert.Empty(t, data)
+	assert.Zero(t, ref)
 	assert.Equal(t, ErrEmptyDelimiter, err)
 }
 
@@ -317,10 +333,13 @@ func TestEncodeAllocation(t *testing.T) {
 			allocs = 1.0
 		}
 		assert.Equal(t, allocs, testing.AllocsPerRun(10, func() {
-			_, ref, _ := Encode(pool, func(enc *Encoder) error {
+			_, ref, err := Encode(pool, func(enc *Encoder) error {
 				encodeDummy(enc)
 				return nil
 			})
+			if err != nil {
+				panic(err)
+			}
 			ref.Release()
 		}))
 	})
