@@ -374,16 +374,9 @@ func (d *Decoder) DelString(delim string, clone bool) string {
 		return ""
 	}
 
-	// cast or set string
-	var str string
-	if clone {
-		str = string(d.buf[:idx])
-	} else {
-		str = cast.ToString(d.buf[:idx])
-	}
-
-	// slice
-	d.buf = d.buf[idx+len(delim):]
+	// decode
+	str := d.String(idx, clone)
+	d.Skip(len(delim))
 
 	return str
 }
@@ -409,17 +402,9 @@ func (d *Decoder) DelBytes(delim []byte, clone bool) []byte {
 		return nil
 	}
 
-	// cast or set bytes
-	var buf []byte
-	if clone {
-		buf = make([]byte, idx)
-		copy(buf, d.buf[:idx])
-	} else {
-		buf = d.buf[:idx]
-	}
-
-	// slice
-	d.buf = d.buf[idx+len(delim):]
+	// decode
+	buf := d.Bytes(idx, clone)
+	d.Skip(len(delim))
 
 	return buf
 }
