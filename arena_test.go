@@ -34,11 +34,8 @@ func TestArena(t *testing.T) {
 	assert.Equal(t, 212, arena.Length())
 
 	arena.Release()
-	assert.Panics(t, func() {
-		arena.Release()
-	})
 
-	assert.Equal(t, 1.0, testing.AllocsPerRun(100, func() {
+	assert.Equal(t, 0.0, testing.AllocsPerRun(100, func() {
 		arena = NewArena(Global(), 64)
 		arena.Get(32, false)
 		arena.Release()

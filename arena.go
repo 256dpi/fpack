@@ -1,5 +1,13 @@
 package fpack
 
+import "sync"
+
+var arenaPool = sync.Pool{
+	New: func() any {
+		return &Arena{}
+	},
+}
+
 // Arena is a basic arena allocator that allocates fixed size buffers to provide
 // memory for many small buffers.
 type Arena struct {
@@ -12,12 +20,19 @@ type Arena struct {
 }
 
 // NewArena creates and returns a new arena using the specified pool and buffer
-// size.
+// size. The arena is obtained from a global pool and recycled upon release.
 func NewArena(pool *Pool, size int) *Arena {
-	return &Arena{
-		pool: pool,
-		size: size,
-	}
+	// get arena
+	arena := arenaPool.Get().(*Arena)
+
+	// set pool and size
+	arena.pool = pool
+	arena.size = size
+
+	// set refs
+	arena.refs = arena._refs[:0]
+
+	return arena
 }
 
 // Length returns the total length of the arena.
@@ -27,11 +42,6 @@ func (a *Arena) Length() int {
 
 // Get will return a buffer of the provided length.
 func (a *Arena) Get(length int, zero bool) []byte {
-	// ensure refs
-	if a.refs == nil {
-		a.refs = a._refs[:0]
-	}
-
 	// increment
 	a.len += length
 
@@ -80,4 +90,8 @@ func (a *Arena) Release() {
 	for _, ref := range a.refs {
 		ref.Release()
 	}
+
+	// recycle arena
+	*a = Arena{}
+	arenaPool.Put(a)
 }
