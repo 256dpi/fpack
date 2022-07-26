@@ -371,6 +371,12 @@ func (d *Decoder) DelString(delim string, clone bool) string {
 		return ""
 	}
 
+	// check delimiter
+	if len(delim) == 0 {
+		d.err = ErrEmptyDelimiter
+		return ""
+	}
+
 	// find index
 	idx := bytes.Index(d.buf, cast.ToBytes(delim))
 	if idx < 0 {
@@ -397,6 +403,12 @@ func (d *Decoder) DelString(delim string, clone bool) string {
 func (d *Decoder) DelBytes(delim []byte, clone bool) []byte {
 	// skip if errored
 	if d.err != nil {
+		return nil
+	}
+
+	// check delimiter
+	if len(delim) == 0 {
+		d.err = ErrEmptyDelimiter
 		return nil
 	}
 

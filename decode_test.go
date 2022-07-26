@@ -243,6 +243,22 @@ func TestDecodeShortBuffer(t *testing.T) {
 	}
 }
 
+func TestDecodeEmptyDelimiters(t *testing.T) {
+	err := Decode(make([]byte, 8), func(dec *Decoder) error {
+		dec.DelString("", false)
+		return nil
+	})
+	assert.Error(t, err)
+	assert.Equal(t, ErrEmptyDelimiter, err)
+
+	err = Decode(make([]byte, 8), func(dec *Decoder) error {
+		dec.DelBytes(nil, false)
+		return nil
+	})
+	assert.Error(t, err)
+	assert.Equal(t, ErrEmptyDelimiter, err)
+}
+
 func TestDecodeInvalidSize(t *testing.T) {
 	err := Decode(make([]byte, 8), func(dec *Decoder) error {
 		dec.Int(3)
