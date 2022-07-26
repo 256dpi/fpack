@@ -17,12 +17,15 @@ func TestArena(t *testing.T) {
 
 	buf1 := arena.Get(0, false)
 	assert.Len(t, buf1, 0)
+	assert.Equal(t, 0, arena.Length())
 
 	buf2 := arena.Get(42, false)
 	assert.Len(t, buf2, 42)
+	assert.Equal(t, 42, arena.Length())
 
 	buf3 := arena.Get(42, false)
 	assert.Len(t, buf3, 42)
+	assert.Equal(t, 84, arena.Length())
 
 	for i := range buf2 {
 		buf2[i] = 'z'
@@ -31,6 +34,7 @@ func TestArena(t *testing.T) {
 
 	buf4 := arena.Clone(sample)
 	assert.Len(t, buf4, len(sample))
+	assert.Equal(t, 212, arena.Length())
 
 	arena.Release()
 	assert.Panics(t, func() {

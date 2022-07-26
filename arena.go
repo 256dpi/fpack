@@ -6,9 +6,15 @@ package fpack
 type Arena struct {
 	Pool  *Pool
 	Size  int
+	len   int
 	buf   []byte
 	refs  []Ref
 	_refs [128]Ref
+}
+
+// Length returns the total length of the arena.
+func (a *Arena) Length() int {
+	return a.len
 }
 
 // Get will return a buffer of the provided length.
@@ -17,6 +23,9 @@ func (a *Arena) Get(length int, zero bool) []byte {
 	if a.refs == nil {
 		a.refs = a._refs[:0]
 	}
+
+	// increment
+	a.len += length
 
 	// check size
 	if length == 0 {
