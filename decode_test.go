@@ -322,29 +322,18 @@ func TestDecodeAllocation(t *testing.T) {
 }
 
 func TestDecodeByteOrder(t *testing.T) {
-	MustDecode([]byte("\x00*"), func(dec *Decoder) {
+	err := Decode([]byte("\x00*"), func(dec *Decoder) error {
 		assert.Equal(t, uint16(42), dec.Uint16())
+		return nil
 	})
+	assert.NoError(t, err)
 
-	MustDecode([]byte("*\x00"), func(dec *Decoder) {
+	err = Decode([]byte("*\x00"), func(dec *Decoder) error {
 		dec.UseLittleEndian()
 		assert.Equal(t, uint16(42), dec.Uint16())
+		return nil
 	})
-}
-
-func TestMustDecode(t *testing.T) {
-	var num uint64
-	ok := MustDecode([]byte("*"), func(dec *Decoder) {
-		num = dec.VarUint()
-	})
-	assert.True(t, ok)
-	assert.Equal(t, uint64(42), num)
-
-	ok = MustDecode([]byte(""), func(dec *Decoder) {
-		num = dec.VarUint()
-	})
-	assert.False(t, ok)
-	assert.Zero(t, num)
+	assert.NoError(t, err)
 }
 
 func BenchmarkDecode(b *testing.B) {

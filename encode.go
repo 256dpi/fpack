@@ -42,17 +42,6 @@ func Measure(fn func(enc *Encoder) error) (int, error) {
 	return length, nil
 }
 
-// MustMeasure wraps Measure but omits the error propagation.
-func MustMeasure(fn func(enc *Encoder)) int {
-	// encode without error
-	length, _ := Measure(func(enc *Encoder) error {
-		fn(enc)
-		return nil
-	})
-
-	return length
-}
-
 // Encode will encode data using the provided encoding function. The function
 // is run once to assess the length of the buffer and once to encode the data.
 // Any error returned by the callback is returned immediately.
@@ -130,32 +119,6 @@ func encode(pool *Pool, buf []byte, withBuf bool, fn func(enc *Encoder) error) (
 	}
 
 	return buf, length, ref, nil
-}
-
-// MustEncode wraps Encode but omits the error propagation.
-func MustEncode(pool *Pool, fn func(enc *Encoder)) ([]byte, Ref, error) {
-	// encode without error
-	data, ref, err := Encode(pool, func(enc *Encoder) error {
-		fn(enc)
-		return nil
-	})
-	if err != nil {
-		return nil, Ref{}, err
-	}
-
-	return data, ref, nil
-}
-
-// MustEncodeInto wraps EncodeInto but omits the error propagation. It will
-// return false if the buffer was not long enough to write all data.
-func MustEncodeInto(buf []byte, fn func(enc *Encoder)) (int, bool) {
-	// encode without error
-	n, err := EncodeInto(buf, func(enc *Encoder) error {
-		fn(enc)
-		return nil
-	})
-
-	return n, err != ErrBufferTooShort
 }
 
 // Encoder manages data encoding.

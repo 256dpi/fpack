@@ -50,16 +50,6 @@ func Decode(bytes []byte, fn func(dec *Decoder) error) error {
 	return nil
 }
 
-// MustDecode wraps Decode but omits error propagation. It will return false if
-// the buffer was not long enough to read all data or the buffer has not been
-// fully consumed.
-func MustDecode(bytes []byte, fn func(dec *Decoder)) bool {
-	return Decode(bytes, func(dec *Decoder) error {
-		fn(dec)
-		return nil
-	}) == nil
-}
-
 // Decoder manages data decoding.
 type Decoder struct {
 	bo  binary.ByteOrder
