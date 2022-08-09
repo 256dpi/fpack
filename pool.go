@@ -2,6 +2,8 @@ package fpack
 
 import (
 	"math/bits"
+	"runtime"
+	"runtime/debug"
 	"sync"
 	"sync/atomic"
 )
@@ -13,10 +15,20 @@ func Global() *Pool {
 	return global
 }
 
+var tracker func([]byte)
+
+// Track will enable buffer tracking if a function is provided and disable it
+// otherwise. The registered function will receive stack traces for leaked
+// buffers.
+func Track(fn func([]byte)) {
+	tracker = fn
+}
+
 type buffer struct {
 	gen   uint64
 	pool  int8
 	slice []byte
+	stack []byte
 }
 
 // Pool is dynamic slice length pool.
@@ -70,6 +82,12 @@ func (r Ref) Release() {
 		panic("fpack: generation mismatch")
 	}
 
+	// clear finalizer if tracked
+	if tracker != nil {
+		r.buf.stack = nil
+		runtime.SetFinalizer(r.buf, nil)
+	}
+
 	// recycle buffer
 	r.pool.pools[r.buf.pool].Put(r.buf)
 }
@@ -120,6 +138,12 @@ func (p *Pool) Borrow(len int, zero bool) ([]byte, Ref) {
 		}
 	}
 
+	// add finalizer if tracked
+	if tracker != nil {
+		buf.stack = debug.Stack()
+		runtime.SetFinalizer(buf, finalizer)
+	}
+
 	// prepare ref
 	ref := Ref{
 		pool: p,
@@ -159,4 +183,10 @@ func (p *Pool) Concat(slices ...[]byte) ([]byte, Ref) {
 	}
 
 	return buf, ref
+}
+
+func finalizer(buf *buffer) {
+	if buf.gen != 0 {
+		tracker(buf.stack)
+	}
 }

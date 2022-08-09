@@ -78,6 +78,26 @@ func TestDoubleRelease(t *testing.T) {
 	})
 }
 
+func TestLeakedBuffer(t *testing.T) {
+	runtime.GC()
+
+	var stack []byte
+	Track(func(bytes []byte) {
+		stack = bytes
+	})
+
+	_, _ = Global().Borrow(123, false)
+	runtime.GC()
+	assert.NotEmpty(t, stack)
+
+	Track(nil)
+	stack = nil
+
+	_, _ = Global().Borrow(123, false)
+	runtime.GC()
+	assert.Empty(t, stack)
+}
+
 func TestGenerationOverflow(t *testing.T) {
 	global.gen = math.MaxUint64
 	_, ref := Global().Borrow(123, false)
