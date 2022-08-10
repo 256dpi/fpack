@@ -10,10 +10,12 @@ var hello = []byte("Hello world!")
 
 func TestBuffer(t *testing.T) {
 	b := NewBuffer(Global(), 3)
+	assert.Equal(t, 0, b.Length())
 
 	n, err := b.WriteAt(hello, 0)
 	assert.NoError(t, err)
 	assert.Equal(t, 12, n)
+	assert.Equal(t, 12, b.Length())
 
 	buf := make([]byte, 12)
 	n, err = b.ReadAt(buf, 0)
@@ -24,6 +26,7 @@ func TestBuffer(t *testing.T) {
 	n, err = b.WriteAt(hello[0:10], 5)
 	assert.NoError(t, err)
 	assert.Equal(t, 10, n)
+	assert.Equal(t, 15, b.Length())
 
 	buf = make([]byte, 10)
 	n, err = b.ReadAt(buf, 5)

@@ -47,6 +47,15 @@ func NewBuffer(pool *Pool, alloc int) *Buffer {
 	return b
 }
 
+// Length returns the buffer length.
+func (b *Buffer) Length() int {
+	// acquire mutex
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
+	return b.length
+}
+
 // Seek implements the io.Seeker interface.
 func (b *Buffer) Seek(offset int64, whence int) (int64, error) {
 	// acquire mutex
