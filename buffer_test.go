@@ -1,6 +1,7 @@
 package fpack
 
 import (
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -33,6 +34,14 @@ func TestBuffer(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 10, n)
 	assert.Equal(t, hello[:10], buf)
+
+	off, err := b.Seek(0, io.SeekStart)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), off)
+
+	buf, err = io.ReadAll(b)
+	assert.NoError(t, err)
+	assert.Len(t, buf, 15)
 
 	b.Release()
 }

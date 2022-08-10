@@ -181,7 +181,7 @@ func (b *Buffer) read(off int, buf []byte) (int, error) {
 	// check offset
 	if off < 0 {
 		return 0, ErrInvalidOffset
-	} else if off > b.length {
+	} else if off >= b.length {
 		return 0, io.EOF
 	}
 
