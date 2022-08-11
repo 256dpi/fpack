@@ -101,7 +101,9 @@ func (r Ref) Release() {
 //
 // Note: For values up to 8 bytes (64 bits) the internal Go arena allocator is
 // used by calling make(). From benchmarks this seems to be faster than calling
-// the pool to borrow and return a value.
+// the pool to borrow and return a value. Also values above 32 MiB are allocated
+// using the Go allocator to ensure not used memory is available to be freed
+// immediately if not used anymore.
 func (p *Pool) Borrow(len int, zero bool) ([]byte, Ref) {
 	// determine pool
 	pool := bits.Len64(uint64(len)) - 10
