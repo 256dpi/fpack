@@ -24,7 +24,11 @@ func TestBuffer(t *testing.T) {
 	assert.Equal(t, 12, n)
 	assert.Equal(t, hello, buf)
 
-	n, err = b.WriteAt(hello[0:10], 5)
+	off, err := b.Seek(5, io.SeekCurrent)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(5), off)
+
+	n, err = b.Write(hello[0:10])
 	assert.NoError(t, err)
 	assert.Equal(t, 10, n)
 	assert.Equal(t, 15, b.Length())
@@ -35,13 +39,33 @@ func TestBuffer(t *testing.T) {
 	assert.Equal(t, 10, n)
 	assert.Equal(t, hello[:10], buf)
 
-	off, err := b.Seek(0, io.SeekStart)
+	off, err = b.Seek(0, io.SeekStart)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(0), off)
 
 	buf, err = io.ReadAll(b)
 	assert.NoError(t, err)
 	assert.Len(t, buf, 15)
+
+	off, err = b.Seek(-2, io.SeekEnd)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(13), off)
+
+	buf, err = io.ReadAll(b)
+	assert.NoError(t, err)
+	assert.Len(t, buf, 2)
+
+	off, err = b.Seek(-1, io.SeekStart)
+	assert.Equal(t, ErrInvalidOffset, err)
+
+	_, err = b.WriteAt(hello, 22)
+	assert.NoError(t, err)
+	assert.Equal(t, 34, b.Length())
+
+	buf = make([]byte, 7)
+	_, err = b.ReadAt(buf, 15)
+	assert.NoError(t, err)
+	assert.Equal(t, make([]byte, 7), buf)
 
 	b.Release()
 }

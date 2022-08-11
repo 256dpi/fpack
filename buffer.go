@@ -109,7 +109,7 @@ func (b *Buffer) WriteAt(buf []byte, off int64) (int, error) {
 	// write data
 	err := b.write(int(off), buf)
 	if err != nil {
-		return 0, nil
+		return 0, err
 	}
 
 	return len(buf), nil
@@ -162,12 +162,22 @@ func (b *Buffer) Release() {
 
 func (b *Buffer) write(off int, buf []byte) error {
 	// check offset
-	if off < 0 || off > b.length {
+	if off < 0 {
 		return ErrInvalidOffset
 	}
 
+	// get length
+	length := b.length
+
 	// grow buffer
 	b.grow(off + len(buf))
+
+	// zero gap
+	b.iterate(length, off, func(chunk []byte, _ int) {
+		for i := range chunk {
+			chunk[i] = 0
+		}
+	})
 
 	// write data
 	b.iterate(off, off+len(buf), func(chunk []byte, loc int) {
