@@ -67,6 +67,17 @@ func TestBuffer(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, make([]byte, 7), buf)
 
+	var chunks [][]byte
+	b.Range(0, 11, func(offset int, data []byte) {
+		chunks = append(chunks, append([]byte{byte(offset)}, data...))
+	})
+	assert.Equal(t, [][]byte{
+		{0, 'H', 'e', 'l'},
+		{3, 'l', 'o', 'H'},
+		{6, 'e', 'l', 'l'},
+		{9, 'o', ' '},
+	}, chunks)
+
 	b.Release()
 }
 

@@ -148,6 +148,27 @@ func (b *Buffer) ReadAt(buf []byte, off int64) (int, error) {
 	return n, nil
 }
 
+// Range will iterate over the buffer in the given range and call the provided
+// function with the offset and data for each chunk.
+func (b *Buffer) Range(offset, length int, fn func(offset int, data []byte)) {
+	// acquire mutex
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
+	// check offset
+	if offset < 0 {
+		return
+	}
+
+	// limit length
+	if offset+length > b.length {
+		length = b.length - offset
+	}
+
+	// iterate
+	b.iterate(offset, offset+length, fn)
+}
+
 // Release will release the buffer and all memory.
 func (b *Buffer) Release() {
 	// release refs
@@ -173,14 +194,14 @@ func (b *Buffer) write(off int, buf []byte) error {
 	b.grow(off + len(buf))
 
 	// zero gap
-	b.iterate(length, off, func(chunk []byte, _ int) {
+	b.iterate(length, off, func(_ int, chunk []byte) {
 		for i := range chunk {
 			chunk[i] = 0
 		}
 	})
 
 	// write data
-	b.iterate(off, off+len(buf), func(chunk []byte, loc int) {
+	b.iterate(off, off+len(buf), func(loc int, chunk []byte) {
 		copy(chunk, buf[loc:])
 	})
 
@@ -201,7 +222,7 @@ func (b *Buffer) read(off int, buf []byte) (int, error) {
 	}
 
 	// read data
-	b.iterate(off, off+len(buf), func(chunk []byte, loc int) {
+	b.iterate(off, off+len(buf), func(loc int, chunk []byte) {
 		copy(buf[loc:], chunk)
 	})
 
@@ -232,7 +253,7 @@ func (b *Buffer) grow(length int) {
 	}
 }
 
-func (b *Buffer) iterate(start, end int, fn func(chunk []byte, loc int)) {
+func (b *Buffer) iterate(start, end int, fn func(loc int, chunk []byte)) {
 	// range over chunks
 	for pos := start; pos < end; {
 		// determine index and position
@@ -246,12 +267,12 @@ func (b *Buffer) iterate(start, end int, fn func(chunk []byte, loc int)) {
 		part := chunk.buf[off:]
 
 		// limit part
-		if len(part) > end-start {
-			part = part[:end-start]
+		if len(part) > end-pos {
+			part = part[:end-pos]
 		}
 
 		// yield part
-		fn(part, pos-start)
+		fn(pos-start, part)
 
 		// increment
 		idx++
