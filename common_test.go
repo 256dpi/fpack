@@ -1,6 +1,10 @@
 package fpack
 
+import "time"
+
 var dummy []byte
+
+var now = time.Date(2022, 05, 7, 20, 43, 0, 0, time.Local)
 
 func init() {
 	enc := "\x00\x00\x00"
@@ -23,6 +27,7 @@ func init() {
 	enc += "\x7F\xEF\xFF\xFF\xFF\xFF\xFF\xFF"
 	enc += "\x0e"
 	enc += "\x80\x04"
+	enc += "\x00\x00\x00\x00\x62\x76\xbd\xb4"
 	enc += "foo"
 	enc += "bar"
 	enc += "\x03foo"

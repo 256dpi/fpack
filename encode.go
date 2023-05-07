@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"math"
 	"sync"
+	"time"
 )
 
 var encoderPool = sync.Pool{
@@ -379,6 +380,11 @@ func (e *Encoder) VarUint(num uint64) {
 	// write number
 	n := binary.PutUvarint(e.buf, num)
 	e.buf = e.buf[n:]
+}
+
+// TimeUnix writes a Unix timestamps in seconds.
+func (e *Encoder) TimeUnix(ts time.Time) {
+	e.Int64(ts.Unix())
 }
 
 // String writes a raw string.

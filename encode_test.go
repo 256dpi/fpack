@@ -29,6 +29,7 @@ func encodeDummy(enc *Encoder) {
 	enc.Float64(math.MaxFloat64)
 	enc.VarInt(7)
 	enc.VarUint(512)
+	enc.TimeUnix(now)
 	enc.String("foo")
 	enc.Bytes([]byte("bar"))
 	enc.FixString("foo", 1)

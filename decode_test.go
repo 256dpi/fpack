@@ -4,6 +4,7 @@ import (
 	"io"
 	"math"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -33,6 +34,7 @@ func testDecode(t *testing.T, clone bool) {
 	var f64 float64
 	var vi int64
 	var vu uint64
+	var ts time.Time
 	var s string
 	var b []byte
 	var fs string
@@ -63,6 +65,7 @@ func testDecode(t *testing.T, clone bool) {
 		f64 = dec.Float64()
 		vi = dec.VarInt()
 		vu = dec.VarUint()
+		ts = dec.TimeUnix()
 		s = dec.String(3, clone)
 		b = dec.Bytes(3, clone)
 		fs = dec.FixString(1, clone)
@@ -94,6 +97,7 @@ func testDecode(t *testing.T, clone bool) {
 	assert.Equal(t, math.MaxFloat64, f64)
 	assert.Equal(t, int64(7), vi)
 	assert.Equal(t, uint64(512), vu)
+	assert.Equal(t, now, ts)
 	assert.Equal(t, "foo", s)
 	assert.Equal(t, []byte("bar"), b)
 	assert.Equal(t, "foo", fs)
@@ -306,6 +310,7 @@ func TestDecodeAllocation(t *testing.T) {
 			dec.Float64()
 			dec.VarInt()
 			dec.VarUint()
+			dec.TimeUnix()
 			dec.String(3, false)
 			dec.Bytes(3, false)
 			dec.FixString(1, false)

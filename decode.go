@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"math"
 	"sync"
+	"time"
 
 	"github.com/tidwall/cast"
 )
@@ -279,6 +280,11 @@ func (d *Decoder) VarInt() int64 {
 	d.buf = d.buf[n:]
 
 	return num
+}
+
+// TimeUnix reads a Unix timestamps in seconds.
+func (d *Decoder) TimeUnix() time.Time {
+	return time.Unix(d.Int64(), 0)
 }
 
 // String reads a raw string. If the string is not cloned it may change if
