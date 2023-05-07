@@ -284,7 +284,7 @@ func (d *Decoder) VarInt() int64 {
 
 // TimeUnix reads a Unix timestamps in seconds.
 func (d *Decoder) TimeUnix() time.Time {
-	return time.Unix(d.Int64(), 0)
+	return time.Unix(d.Int64(), 0).UTC()
 }
 
 // String reads a raw string. If the string is not cloned it may change if

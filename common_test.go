@@ -4,7 +4,7 @@ import "time"
 
 var dummy []byte
 
-var now = time.Date(2022, 05, 7, 20, 43, 0, 0, time.Local)
+var now = time.Date(2022, 05, 7, 18, 43, 0, 0, time.UTC)
 
 func init() {
 	enc := "\x00\x00\x00"
